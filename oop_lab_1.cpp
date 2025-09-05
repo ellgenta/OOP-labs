@@ -46,7 +46,7 @@ public:
 
     void push_front(int value) {
         node* new_head = (node*)malloc(sizeof(node));
-        if(new_head == nullptr){
+        if(new_head == nullptr) {
             error_handling(SIG_OS);
             return;
         }
@@ -63,7 +63,7 @@ public:
     }
 
     void pop_front() {
-        if(sz == 0){
+        if(sz == 0) {
             error_handling(SIG_IC);
             return;
         }
@@ -80,7 +80,7 @@ public:
 
     void push_back(int value){
         node *new_tail = (node*)calloc(1, sizeof(node));
-        if(new_tail == nullptr){
+        if(new_tail == nullptr) {
             error_handling(SIG_OS);
             return;
         }
@@ -126,7 +126,7 @@ public:
     }
 
     void insert(node* prev, int value) {
-        if(prev->next == nullptr){
+        if(prev->next == nullptr) {
             this->push_back(value);
             return;
         }
@@ -147,7 +147,7 @@ public:
     }
 
     void erase(node* prev) {
-        if(prev->next == nullptr){
+        if(prev->next == nullptr) {
             received = SIG_DEF;
             return;
         }
@@ -159,7 +159,7 @@ public:
         prev->next=aux_ptr;
         sz -= 1;
 
-        if(sz == 0){
+        if(sz == 0) {
             head = nullptr;
             tail = nullptr;
         }
@@ -173,7 +173,7 @@ public:
             #if !defined TESTS
             #error Returning value can not be used!
             #else
-            return SIG_IC;
+            //return SIG_IC;
             #endif
         }
         received = SIG_DEF;
@@ -181,7 +181,7 @@ public:
         return head->data;
     }
 
-    int back(){
+    int back() {
         if(tail == nullptr) {
             error_handling(SIG_IC);
             #if !defined TESTS
@@ -195,22 +195,22 @@ public:
         return tail->data;
     }
 
-    void resize(int newsize){
-        if(newsize < 0){
+    void resize(int newsize) {
+        if(newsize < 0) {
             error_handling(SIG_TRN);
             return;
         }
 
-        if(newsize == (int)sz){
+        if(newsize == (int)sz) {
             received = SIG_DEF;
             return;
         }
 
         int diff = newsize - (int)sz;
-        if(diff > 0){
+        if(diff > 0) {
             while(sz < newsize)
                 push_back(0);
-        }else{
+        } else{
             while(sz > newsize)
                 pop_back();
         }
@@ -218,13 +218,13 @@ public:
         received = SIG_DEF;
     }
     
-    size_t size(){
+    size_t size() {
         received = SIG_DEF;
 
         return sz;
     }
 
-    void clear(){
+    void clear() {
         if(head == nullptr)
             return;
 
