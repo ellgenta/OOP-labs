@@ -4,12 +4,12 @@
 
 #define TESTS
 
-typedef enum {
+using signal = enum {
     SIG_DEF,
     SIG_OS,
     SIG_TRN,
     SIG_IC
-} signal;
+};
 
 signal received = SIG_DEF;
 
@@ -34,12 +34,12 @@ class linked_list {
 private:
     node* head;
     node* tail;
-    size_t size;
+    size_t sz;
 public:
     void initialize() {
         head = NULL;
         tail = NULL;
-        size = 0;
+        sz = 0;
 
         received = SIG_DEF;
     }
@@ -57,13 +57,13 @@ public:
         if(tail == nullptr)
             tail = head;
 
-        size += 1;
+        sz += 1;
 
         received = SIG_DEF;
     }
 
     void pop_front() {
-        if(size == 0){
+        if(sz == 0){
             error_handling(SIG_IC);
             return;
         }
@@ -73,7 +73,7 @@ public:
         head = new_head;
         if(head == nullptr)
             tail = nullptr;
-        size -= 1;
+        sz -= 1;
 
         received = SIG_DEF;
     }
@@ -92,13 +92,13 @@ public:
             head = new_tail;
         tail = new_tail;
 
-        size += 1;
+        sz += 1;
 
         received = SIG_DEF;
     }
 
     void pop_back() {
-        if(size == 0) {
+        if(sz == 0) {
             error_handling(SIG_IC);
             return;
         }
@@ -107,7 +107,7 @@ public:
             free(head);
             head = nullptr;
             tail = nullptr;
-            size -= 1;
+            sz -= 1;
 
             received = SIG_DEF;
             return;
@@ -120,7 +120,7 @@ public:
         free(tail);
         tail = tmp;
         tail->next = NULL;
-        size -= 1;
+        sz -= 1;
 
         received=SIG_DEF;
     }
@@ -141,7 +141,7 @@ public:
         new_node->next = prev->next;
         prev->next = new_node;
 
-        size += 1;
+        sz += 1;
 
         received = SIG_DEF;
     }
@@ -157,9 +157,9 @@ public:
             tail = head;
         free(prev->next);
         prev->next=aux_ptr;
-        size -= 1;
+        sz -= 1;
 
-        if(size == 0){
+        if(sz == 0){
             head = nullptr;
             tail = nullptr;
         }
@@ -201,27 +201,27 @@ public:
             return;
         }
 
-        if(newsize == (int)size){
+        if(newsize == (int)sz){
             received = SIG_DEF;
             return;
         }
 
-        int diff = newsize - (int)size;
+        int diff = newsize - (int)sz;
         if(diff > 0){
-            while(size < newsize)
+            while(sz < newsize)
                 push_back(0);
         }else{
-            while(size > newsize)
+            while(sz > newsize)
                 pop_back();
         }
 
         received = SIG_DEF;
     }
     
-    size_t len(){
+    size_t size(){
         received = SIG_DEF;
 
-        return size;
+        return sz;
     }
 
     void clear(){
@@ -235,7 +235,7 @@ public:
             aux_ptr_next = aux_ptr->next;
             free(aux_ptr);
             aux_ptr = aux_ptr_next;
-            size -= 1;
+            sz -= 1;
         }
 
         head = aux_ptr;
@@ -562,11 +562,11 @@ int main(void)
     linked_list ex;
 
     ex.initialize();
-    assert(ex.len() == 0);
+    assert(ex.size() == 0);
     ex.push_back(3);
-    assert(ex.len() == 1);
+    assert(ex.size() == 1);
     ex.pop_back();
-    assert(ex.len() == 0);
+    assert(ex.size() == 0);
 
     #ifndef DUMMY_MACRO
     test_initialize();
