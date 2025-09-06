@@ -4,7 +4,7 @@
 
 struct node {
     int data;
-    node *next;
+    node* next;
 };
 
 class linked_list {
@@ -425,6 +425,7 @@ int main(void)
     test_resize();
     test_size();
     test_clear();
+    test_get_at();
 
     return 0;
 }
