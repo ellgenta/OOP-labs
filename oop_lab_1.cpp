@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <cassert>
 
 #define TESTS
@@ -146,6 +145,8 @@ public:
 
     size_t size() { return sz; }
 };
+
+#ifdef  TESTS
 
 void test_initialize() {
     linked_list example;
@@ -427,3 +428,5 @@ int main(void)
 
     return 0;
 }
+
+#endif
