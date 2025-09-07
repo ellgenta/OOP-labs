@@ -20,8 +20,7 @@ public:
     }
 
     node* get_at(size_t pos) {
-        if(pos >= sz)
-            return nullptr;
+        assert(pos >= 0 && pos < sz);
 
         node* it = head;
         for(int i = 0; i < pos; i++)
@@ -378,9 +377,6 @@ void test_get_at() {
     example.initialize();
 
     node* ptr;
-    
-    ptr = example.get_at(0);
-    assert(ptr == nullptr);
 
     example.push_back(1);
     example.push_back(2);
