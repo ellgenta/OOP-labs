@@ -45,7 +45,11 @@ public:
 
     node* find(int key) {return root->_find(key, root);}
 
-    void clear() {root->_clear(root);}
+    void clear() {
+        root->_clear(root);
+        root = nullptr;
+        sz = 0;
+    }
 
     bool contains(int key) {return root->_find(key, root);}
 
