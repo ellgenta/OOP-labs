@@ -1,6 +1,7 @@
-# Executables
+# Executables and Code Runners
 
 *.exe
+tempCodeRunnerFile.cpp
 
 # .json files
 
