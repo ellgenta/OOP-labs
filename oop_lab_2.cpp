@@ -1,5 +1,5 @@
 #include <iostream>
-#include <vector>
+#include <queue>
 
 using color = enum {red, black};
 
@@ -16,39 +16,22 @@ private:
     //node* rotate_right()
 public:
     node() {}
+
     node(int v) {key = v;}
+
     node(int v, color cl) {key = v; this->cl = cl;}
+
     node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
 
-    node* _find(int key, node* root) {
-        if(root == nullptr)
-            return nullptr;
-        if(root->key > key)
-            return _find(key, root->left);
-        if(root->key < key)
-            return _find(key, root->right);
-        return root;
-    }
+    int& get_key() {return key;}
 
-    node* _at(node* root, int pos, int& cur_pos) {
-        if(root->left != nullptr)
-            return _at(root->left, pos, cur_pos);
-        if(cur_pos == pos)
-            return root;
-        cur_pos += 1;
-        if(root->right != nullptr)
-            return _at(root->right, pos, cur_pos);
-    }
+    color& get_color() {return cl;}
 
-    bool _is_equal(node* ft, node* sc) {
-        if(!ft && sc || ft && !sc)
-            return false;
-        if(ft == nullptr && sc == nullptr)
-            return true;
-        if(ft->key != sc->key)
-            return false;
-        return _is_equal(ft->left, sc->left) && _is_equal(ft->right, sc->right);
-    }
+    node* get_parent() {return parent;}
+
+    node* get_left_succ() {return left;}
+
+    node* get_right_succ() {return right;}
 
     void _clear(node* root) {
         if(root == nullptr)
@@ -78,24 +61,23 @@ public:
             //insert(array[i]);
     }
 
-    set(std::vector<int>::iterator first, std::vector<int>::iterator last) {
-        //for(auto it = first; it != last; it++) 
-            //insert(*it);
-    }
-
     set(set& other) {
 
     }
 
-    node* find(int key) {return root->_find(key, root);}
+    node* find(int key) {
+        node* it = root;
 
-    node* at(int pos) { 
-        if(pos < 0)
-            pos = sz + pos;
-        if(pos >= sz)
-            return nullptr;
-        int cur_pos = 0;
-        return root->_at(root, pos, cur_pos);
+        while(it != nullptr) {
+            if(it->get_key() > key)
+                it = it->get_left_succ();
+            else if(it->get_key() < key)
+                it = it->get_right_succ();
+            else
+                break;
+        }
+
+        return it;
     }
 
     void clear() {
@@ -104,11 +86,16 @@ public:
         sz = 0;
     }
 
-    bool contains(int key) {return root->_find(key, root) != nullptr;}
+    bool contains(int key) {return find(key);}
 
     bool empty() {return root == nullptr;}
 
-    bool is_equal(set& first, set& second) {return root->_is_equal(first.root, second.root);}
+    bool is_equal(set& first, set& second) {
+        std::queue<node*> f_queue;
+        std::queue<node*> s_queue;
+
+        //while()
+    }
 
     //void assign() {}
 
