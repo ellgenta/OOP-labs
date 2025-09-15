@@ -20,10 +20,10 @@ public:
     }
 
     node* get_at(size_t pos) {
-        assert(pos >= 0 && pos < sz);
+        assert(pos < sz);
 
         node* it = head;
-        for(int i = 0; i < pos; i++)
+        for(size_t i = 0; i < pos; i++)
             it = it->next;
 
         return it;
