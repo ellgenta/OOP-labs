@@ -10,10 +10,6 @@ private:
     node* left = nullptr;
     node* right = nullptr;
     node* parent = nullptr;
-
-    //node* rotate_left()
-
-    //node* rotate_right()
 public:
     node() {}
 
@@ -23,25 +19,15 @@ public:
 
     node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
 
-    int& get_key() {return key;}
+    int get_key() {return key;}
 
-    color& get_color() {return cl;}
+    color get_color() {return cl;}
 
     node* get_parent() {return parent;}
 
-    node* get_left_succ() {return left;}
+    node* get_left() {return left;}
 
-    node* get_right_succ() {return right;}
-
-    void _clear(node* root) {
-        if(root == nullptr)
-            return;
-        if(root->left != nullptr)
-            _clear(root->left);
-        if(root->right != nullptr)
-            _clear(root->right);
-        delete root;
-    }
+    node* get_right() {return right;}
 };
 
 class set {
@@ -56,7 +42,7 @@ public:
             //insert(i);
     }
 
-    set(int* array, size_t size) {
+    set(const int array[], size_t size) {
         //for(size_t i = 0; i < size; i++)
             //insert(array[i]);
     }
@@ -65,14 +51,46 @@ public:
 
     }
 
+    ~set() {clear();}
+
+    bool empty() {return sz == 0;}
+
+    size_t size() {return sz;}
+
+    void clear() {
+        if(root == nullptr)
+            return;
+
+        std::queue<node*> q;
+        q.push(root);
+        while(q.empty() == false) {
+            if(q.front()->get_left() != nullptr) 
+                q.push(q.front()->get_left());
+            if(q.front()->get_right() != nullptr) 
+                q.push(q.front()->get_right());
+            delete q.front();
+            q.pop();
+        }
+
+        root = nullptr;
+    }
+
+    void insert(int key) {
+
+    }
+
+    void erase(int key) {
+
+    }
+
     node* find(int key) {
         node* it = root;
 
         while(it != nullptr) {
             if(it->get_key() > key)
-                it = it->get_left_succ();
+                it = it->get_left();
             else if(it->get_key() < key)
-                it = it->get_right_succ();
+                it = it->get_right();
             else
                 break;
         }
@@ -80,36 +98,35 @@ public:
         return it;
     }
 
-    void clear() {
-        root->_clear(root);
-        root = nullptr;
-        sz = 0;
-    }
-
-    bool contains(int key) {return find(key);}
-
-    bool empty() {return root == nullptr;}
+    bool contains(int key) {return find(key) != nullptr;}
 
     bool is_equal(set& first, set& second) {
         std::queue<node*> f_queue;
         std::queue<node*> s_queue;
 
-        //while()
+        if(first.root != nullptr)
+            f_queue.push(first.root);
+        if(second.root != nullptr)
+            s_queue.push(second.root);
+
+        while(f_queue.empty() == false && s_queue.empty() == false) {
+            if(f_queue.front()->get_key() != s_queue.front()->get_key())
+                return false;
+
+            if(f_queue.front()->get_left() != nullptr)
+                f_queue.push(f_queue.front()->get_left());
+            if(f_queue.front()->get_right() != nullptr)
+                f_queue.push(f_queue.front()->get_right());
+
+            if(s_queue.front()->get_left() != nullptr)
+                s_queue.push(s_queue.front()->get_left());
+            if(s_queue.front()->get_right() != nullptr)
+                s_queue.push(s_queue.front()->get_right());
+        }
+
+        return f_queue.empty() && s_queue.empty();
     }
-
-    //void assign() {}
-
-    //void resize() {}
-
-    //void swap() {}
-
-    size_t size() {return sz;}
-
-    ~set() {
-        root->_clear(root);
-        root = nullptr;
-        sz = 0;
-    }
+    
 };
 
 int main(void) {
