@@ -48,7 +48,7 @@ private:
         node* z = x->get_left();
         node* g = x->get_parent()->get_parent();
 
-        x->get_parent()->set_left(z);
+        x->get_parent()->set_right(z);
         x->set_left(x->get_parent());
 
         if(g != nullptr) {
@@ -132,11 +132,6 @@ private:
 
 public:
     set() {root = nullptr; sz = 0;}
-
-    set(size_t size) {
-        for(size_t i = 0; i < size; i++) 
-            insert(i);
-    }
 
     set(const int* array, size_t size) {
         for(size_t i = 0; i < size; i++)
@@ -264,6 +259,10 @@ int main(void) {
     example.insert(2);
     example.insert(3);
     example.insert(1);
+    example.insert(0);
+    example.insert(4);
+    example.insert(5);
+    example.insert(6);
 
     node* x = example.find(2);
     node* y = example.find(1);
