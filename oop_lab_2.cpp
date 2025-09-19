@@ -224,30 +224,30 @@ public:
     bool contains(int key) {return find(key) != nullptr;}
 
     bool is_equal(set& first, set& second) {
-        std::queue<node*> f_queue;
-        std::queue<node*> s_queue;
+        std::queue<std::pair<node*, node*>> q;
 
-        if(first.root != nullptr)
-            f_queue.push(first.root);
-        if(second.root != nullptr)
-            s_queue.push(second.root);
+        if(first.root != nullptr && second.root != nullptr)
+            q.push(std::make_pair(first.root, second.root));
+        else if(first.root == nullptr && second.root == nullptr)
+            return true;
 
-        while(f_queue.empty() == false && s_queue.empty() == false) {
-            if(f_queue.front()->key != s_queue.front()->key)
+        while(q.empty() == false) {
+            node* f = q.front().first;
+            node* s = q.front().second;
+
+            if(f->key != s->key)
                 return false;
-
-            if(f_queue.front()->left != nullptr)
-                f_queue.push(f_queue.front()->left);
-            if(f_queue.front()->right != nullptr)
-                f_queue.push(f_queue.front()->right);
-
-            if(s_queue.front()->left != nullptr)
-                s_queue.push(s_queue.front()->left);
-            if(s_queue.front()->right != nullptr)
-                s_queue.push(s_queue.front()->right);
+            if(f->left && s->left)
+                q.push(std::make_pair(f->left, s->left));
+            else if(!f->left && s->left || !f->left && s->left)
+                return false;
+            if(f->right && s->right)
+                q.push(std::make_pair(f->right, s->right));
+            else if(!f->right && s->right || !f->right && s->right)
+                return false;
         }
 
-        return f_queue.empty() && s_queue.empty();
+        return true;
     }
     
 };
