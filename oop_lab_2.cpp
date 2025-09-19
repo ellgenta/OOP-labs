@@ -22,8 +22,8 @@ private:
         node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
     };
 
-    node* root;
-    size_t sz;
+    node* root = nullptr;
+    size_t sz = 0;
 
     void rotate_left(node* x) {
         node* z = x->left;
@@ -112,7 +112,7 @@ private:
     }
     
 public:
-    set() {root = nullptr; sz = 0;}
+    set() {}
 
     set(const int* array, size_t size) {
         for(size_t i = 0; i < size; i++)
@@ -121,7 +121,8 @@ public:
 
     set(set& other) {
         std::queue<node*> q;
-        q.push(other.root);
+        if(other.root != nullptr)
+            q.push(other.root);
 
         while(q.empty() == false) {
             insert(q.front()->key);
@@ -131,6 +132,14 @@ public:
                 q.push(q.front()->right);
             q.pop();
         }
+    }
+
+    set(set&& other) {
+        root = other.root;
+        sz = other.sz;
+
+        other.root = nullptr;
+        other.sz = 0;
     }
 
     ~set() {clear();}
