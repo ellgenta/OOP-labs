@@ -2,134 +2,115 @@
 #include <cassert>
 #include <queue>
 
-using color = enum {red, black};
-
-class node {
-private:
-    int key = 0;
-    color cl = black;
-    node* left = nullptr;
-    node* right = nullptr;
-    node* parent = nullptr;
-public:
-    node() {}
-
-    node(int v) {key = v;}
-
-    node(int v, color cl) {key = v; this->cl = cl;}
-
-    node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
-
-    int get_key() {return key;}
-
-    color get_color() {return cl;}
-
-    node* get_parent() {return parent;}
-
-    node* get_left() {return left;}
-
-    node* get_right() {return right;}
-
-    void set_left(node* l) {left = l;}
-
-    void set_right(node* r) {right = r;}
-
-    void set_parent(node* p) {parent = p;}
-
-    void set_color(color c) {cl = c;}
-};
-
 class set {
 private:
+    using color = enum {red, black};
+
+    struct node {
+        int key = 0;
+        color cl = black;
+        node* left = nullptr;
+        node* right = nullptr;
+        node* parent = nullptr;
+
+        node() {}
+
+        node(int v) {key = v;}
+
+        node(int v, color cl) {key = v; this->cl = cl;}
+
+        node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
+    };
+
     node* root;
     size_t sz;
 
     void rotate_left(node* x) {
-        node* z = x->get_left();
-        node* g = x->get_parent()->get_parent();
+        node* z = x->left;
+        node* g = x->parent->parent;
 
-        x->get_parent()->set_right(z);
-        x->set_left(x->get_parent());
-
+        x->parent->right = z;
+        x->left = x->parent;
+        
         if(g != nullptr) {
-            if(g->get_left() == x->get_parent()) 
-                g->set_left(x);
+            if(g->left == x->parent) 
+                g->left = x;
             else 
-                g->set_right(x);
+                g->right = x;
         } else {
             root = x;
         }
-
-        x->get_parent()->set_parent(x);
-        x->set_parent(g);
+        
+        x->parent->parent = x;
+        x->parent = g;
     }
-
+    
     void rotate_right(node* x) {
-        node* z = x->get_right();
-        node* g = x->get_parent()->get_parent();
+        node* z = x->right;
+        node* g = x->parent->parent;
 
-        x->get_parent()->set_left(z);
-        x->set_right(x->get_parent());
-
+        x->parent->left = z;
+        x->right = x->parent;
+        
         if(g != nullptr) {
-            if(g->get_left() == x->get_parent()) 
-                g->set_left(x);
+            if(g->left == x->parent) 
+            g->left = x;
             else 
-                g->set_right(x);
+            g->right = x;
         } else {
             root = x;
         }
-
-        x->get_parent()->set_parent(x);
-        x->set_parent(g);
+        
+        x->parent->parent = x;
+        x->parent = g;
     }   
-
+    
     void fix_insert(node* it) {
-        while(it->get_parent() && it->get_parent()->get_color() == red) {
-            node* p = it->get_parent();
-            if(p == p->get_parent()->get_left()) {
-                node* uncle = p->get_parent()->get_right();
-                if(uncle && uncle->get_color() == red) {
-                    uncle->set_color(black);
-                    p->set_color(black);
-                    p->get_parent()->set_color(red);
-                    it = p->get_parent();
+        while(it->parent && it->parent->cl == red) {
+            node* p = it->parent;
+            if(p == p->parent->left) {
+                node* uncle = p->parent->right;
+                if(uncle && uncle->cl == red) {
+                    uncle->cl = black;
+                    p->cl = black;
+                    p->parent->cl = red;
+                    it = p->parent;
                 } else {
-                    if(it == it->get_parent()->get_right()) {
-                        it = it->get_parent();
+                    if(it == it->parent->right) {
+                        it = it->parent;
                         rotate_left(it);
                     }
-                    if(it->get_parent() && it->get_parent()->get_parent()) {
-                        it->get_parent()->set_color(black);
-                        it->get_parent()->get_parent()->set_color(red);
-                        rotate_right(it->get_parent());
+                    if(it->parent && it->parent->parent) {
+                        it->parent->cl = black;
+                        it->parent->parent->cl = red;
+                        rotate_right(it->parent);
                     }
                 }
             } else {
-                node* uncle = it->get_parent()->get_parent()->get_left();
-                if(uncle && uncle->get_color() == red) {
-                    it->get_parent()->set_color(black);
-                    uncle->set_color(black);
-                    p->get_parent()->set_color(red);
-                    it = it->get_parent()->get_parent();
+                node* uncle = it->parent->parent->left;
+                if(uncle && uncle->cl == red) {
+                    it->parent->cl = black;
+                    uncle->cl = black;
+                    p->parent->cl = red;
+                    it = it->parent->parent;
                 } else {
-                    if(it == it->get_parent()->get_left()) {
-                        it = it->get_parent();
+                    if(it == it->parent->left) {
+                        it = it->parent;
                         rotate_right(it);
                     }
-                    if(it->get_parent() && it->get_parent()->get_parent()) {
-                        it->get_parent()->set_color(black);
-                        it->get_parent()->get_parent()->set_color(red);
-                        rotate_left(it->get_parent());
+                    if(it->parent && it->parent->parent) {
+                        it->parent->cl = black;
+                        it->parent->parent->cl = red;
+                        rotate_left(it->parent);
                     }
                 }
             }
             if(it == root)
-                break;
+            break;
         }
-        root->set_color(black);
+        root->cl = black;
     }
-
+    
 public:
     set() {root = nullptr; sz = 0;}
 
@@ -139,7 +120,17 @@ public:
     }
 
     set(set& other) {
+        std::queue<node*> q;
+        q.push(other.root);
 
+        while(q.empty() == false) {
+            insert(q.front()->key);
+            if(q.front()->left == nullptr)
+                q.push(q.front()->left);
+            if(q.back()->right == nullptr)
+                q.push(q.front()->right);
+            q.pop();
+        }
     }
 
     ~set() {clear();}
@@ -155,10 +146,10 @@ public:
         std::queue<node*> q;
         q.push(root);
         while(q.empty() == false) {
-            if(q.front()->get_left() != nullptr) 
-                q.push(q.front()->get_left());
-            if(q.front()->get_right() != nullptr) 
-                q.push(q.front()->get_right());
+            if(q.front()->left != nullptr) 
+                q.push(q.front()->left);
+            if(q.front()->right != nullptr) 
+                q.push(q.front()->right);
             delete q.front();
             q.pop();
         }
@@ -174,29 +165,29 @@ public:
         }
 
         node* it = root;
-        while(it->get_key() != key) {
-            if(it->get_key() > key) {
-                if(it->get_left() == nullptr) {
-                    it->set_left(new node(key, red, it));
+        while(it->key != key) {
+            if(it->key > key) {
+                if(it->left == nullptr) {
+                    it->left = new node(key, red, it);
                     break;
                 }
-                it = it->get_left();
+                it = it->left;
             }
-            else if(it->get_key() < key) {
-                if(it->get_right() == nullptr) {
-                    it->set_right(new node(key, red, it));
+            else if(it->key < key) {
+                if(it->right == nullptr) {
+                    it->right = new node(key, red, it);
                     break;
                 }
-                it = it->get_right();
+                it = it->right;
             }
         }
 
-        if(it->get_key() == key)
+        if(it->key == key)
             return;
-        if(it->get_left() && it->get_left()->get_key() == key)
-            it = it->get_left();
+        if(it->left && it->left->key == key)
+            it = it->left;
         else 
-            it = it->get_right();
+            it = it->right;
 
         fix_insert(it);
         sz += 1;
@@ -210,10 +201,10 @@ public:
         node* it = root;
 
         while(it != nullptr) {
-            if(it->get_key() > key)
-                it = it->get_left();
-            else if(it->get_key() < key)
-                it = it->get_right();
+            if(it->key > key)
+                it = it->left;
+            else if(it->key < key)
+                it = it->right;
             else
                 break;
         }
@@ -233,18 +224,18 @@ public:
             s_queue.push(second.root);
 
         while(f_queue.empty() == false && s_queue.empty() == false) {
-            if(f_queue.front()->get_key() != s_queue.front()->get_key())
+            if(f_queue.front()->key != s_queue.front()->key)
                 return false;
 
-            if(f_queue.front()->get_left() != nullptr)
-                f_queue.push(f_queue.front()->get_left());
-            if(f_queue.front()->get_right() != nullptr)
-                f_queue.push(f_queue.front()->get_right());
+            if(f_queue.front()->left != nullptr)
+                f_queue.push(f_queue.front()->left);
+            if(f_queue.front()->right != nullptr)
+                f_queue.push(f_queue.front()->right);
 
-            if(s_queue.front()->get_left() != nullptr)
-                s_queue.push(s_queue.front()->get_left());
-            if(s_queue.front()->get_right() != nullptr)
-                s_queue.push(s_queue.front()->get_right());
+            if(s_queue.front()->left != nullptr)
+                s_queue.push(s_queue.front()->left);
+            if(s_queue.front()->right != nullptr)
+                s_queue.push(s_queue.front()->right);
         }
 
         return f_queue.empty() && s_queue.empty();
@@ -263,14 +254,10 @@ int main(void) {
     example.insert(4);
     example.insert(5);
     example.insert(6);
-
-    node* x = example.find(2);
-    node* y = example.find(1);
-    node* z = example.find(3);
     
-    assert(example.find(4) == nullptr);
+    assert(example.find(4) != nullptr);
     assert(example.contains(3) == true);
-    assert(example.size() == 3);
+    assert(example.size() == 7);
 
     return 0;
 }
