@@ -206,6 +206,17 @@ public:
 
     }
 
+    void swap(set& other) {
+        node* o_root = other.root;
+        size_t o_size = other.sz; 
+
+        other.root = this->root;
+        other.sz = this->sz;
+
+        this->root = o_root;
+        this->sz = o_size;
+    }
+
     node* find(int key) {
         node* it = root;
 
@@ -222,6 +233,8 @@ public:
     }
 
     bool contains(int key) {return find(key) != nullptr;}
+
+    int count(int key) {return (int)contains(key);}
 
     bool is_equal(set& first, set& second) {
         std::queue<std::pair<node*, node*>> q;
