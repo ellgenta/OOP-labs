@@ -111,6 +111,10 @@ private:
         root->cl = black;
     }
     
+    void fix_erase(node* it) {
+
+    }
+
 public:
     set() {}
 
@@ -126,9 +130,9 @@ public:
 
         while(q.empty() == false) {
             insert(q.front()->key);
-            if(q.front()->left == nullptr)
+            if(q.front()->left != nullptr)
                 q.push(q.front()->left);
-            if(q.back()->right == nullptr)
+            if(q.front()->right != nullptr)
                 q.push(q.front()->right);
             q.pop();
         }
@@ -203,7 +207,21 @@ public:
     }
 
     void erase(int key) {
+        if(root == nullptr) 
+            return;
 
+        node* it = root;
+        while(it->key != key) {
+            if(it->key > key && it->left != nullptr)
+                it = it->left;
+            else if(it->key < key && it->right != nullptr)
+                it = it->right;
+            else 
+                return;
+        }
+
+        fix_erase(it);
+        sz -= 1;
     }
 
     void swap(set& other) {
@@ -266,20 +284,37 @@ public:
 };
 
 int main(void) {
-    set example;
-
-    example.insert(1);
-    example.insert(2);
-    example.insert(3);
-    example.insert(1);
-    example.insert(0);
-    example.insert(4);
-    example.insert(5);
-    example.insert(6);
+    set A;
     
-    assert(example.find(4) != nullptr);
-    assert(example.contains(3) == true);
-    assert(example.size() == 7);
+    assert(A.find(0) == nullptr);
+    assert(A.empty() == true);
+    assert(A.size() == 0);
+
+    const int* b = new const int[5] {1, 2, 3, 4, 5};
+    set B(b, 5);
+
+    assert(B.find(1) != nullptr);
+    assert(B.find(5) != nullptr);
+    assert(B.empty() == false);
+    assert(B.size() == 5);
+
+    set C(std::move(B));
+
+    assert(B.empty() == true);
+    assert(B.size() == 0);
+    assert(C.empty() == false);
+    assert(C.size() == 5);
+
+    set D(C);
+    assert(D.empty() == false);
+    assert(D.size() == 5);
+    assert(C.empty() == false);
+    assert(C.size() == 5);
+    assert(C.find(3) != nullptr);
+    assert(D.find(3) != nullptr);
+    assert(D.find(3) != C.find(3));
+
+    delete[] b;
 
     return 0;
 }
