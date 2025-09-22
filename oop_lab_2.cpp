@@ -17,8 +17,6 @@ private:
 
         node(int v) {key = v;}
 
-        node(int v, color cl) {key = v; this->cl = cl;}
-
         node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
     };
 
@@ -148,6 +146,29 @@ public:
 
     ~set() {clear();}
 
+    set& operator=(const set& other) {
+        if(&other == this) 
+            return *this;
+
+        if(root != nullptr) 
+            clear();
+
+        std::queue<node*> q;
+        if(other.root != nullptr)
+            q.push(other.root);
+
+        while(q.empty() == false) {
+            insert(q.front()->key);
+            if(q.front()->left != nullptr)
+                q.push(q.front()->left);
+            if(q.front()->right != nullptr)
+                q.push(q.front()->right);
+            q.pop();
+        }
+
+        return *this;
+    }
+
     bool empty() {return sz == 0;}
 
     size_t size() {return sz;}
@@ -225,14 +246,8 @@ public:
     }
 
     void swap(set& other) {
-        node* o_root = other.root;
-        size_t o_size = other.sz; 
-
-        other.root = this->root;
-        other.sz = this->sz;
-
-        this->root = o_root;
-        this->sz = o_size;
+        std::swap(other.root, this->root);
+        std::swap(other.sz, this->sz); 
     }
 
     node* find(int key) {
@@ -313,6 +328,13 @@ int main(void) {
     assert(C.find(3) != nullptr);
     assert(D.find(3) != nullptr);
     assert(D.find(3) != C.find(3));
+
+    set E;
+    E = C;
+    assert(E.find(1) != nullptr);
+    assert(E.find(5) != nullptr);
+    assert(E.empty() == false);
+    assert(E.size() == 5);
 
     delete[] b;
 
