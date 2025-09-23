@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cassert>
 #include <queue>
 
@@ -109,10 +108,25 @@ private:
         root->cl = black;
     }
     
+    void transplant(node* u, node* v) {
+        if(u->parent == nullptr)
+            root = v;
+        else if(u->parent->left == u)
+            u->parent->left = v;
+        else
+            u->parent->right = v;
+        v->parent = u->parent;
+    }
+
     void fix_erase(node* it) {
 
     }
 
+    node* get_min(node* x) {
+        while(x->left != nullptr)
+            x = x->left;
+        return x;
+    }
 public:
     set() {}
 
@@ -167,6 +181,10 @@ public:
         }
 
         return *this;
+    }
+
+    bool operator==(const set& other) {
+        return is_equal(*this, other);
     }
 
     bool empty() {return sz == 0;}
@@ -228,20 +246,42 @@ public:
     }
 
     void erase(int key) {
-        if(root == nullptr) 
+        node* it = find(key);
+        if(it == nullptr)
             return;
 
-        node* it = root;
-        while(it->key != key) {
-            if(it->key > key && it->left != nullptr)
-                it = it->left;
-            else if(it->key < key && it->right != nullptr)
-                it = it->right;
-            else 
-                return;
+        node* y = it;
+        node* x = nullptr;
+        color y_cl = y->cl;
+
+        if(it->left == nullptr) {
+            x = it->right;
+            transplant(it, it->right);
+        } else if(it->right == nullptr) {
+            x = it->left;
+            transplant(it, it->left);
+        } else {
+            y = get_min(it->right);
+            y_cl = y->cl;
+            x = y->right;
+
+            if(y->parent == it) 
+                x->parent = y;
+            else {
+                transplant(y, y->right);
+                y->right = it->right;
+                y->right->parent = y;
+            }
+
+            transplant(it, y);
+            y->left = it->left;
+            y->left->parent = y;
+            y->cl = it->cl;
         }
 
-        fix_erase(it);
+        if(y_cl == black)
+            fix_erase(x);
+
         sz -= 1;
     }
 
@@ -269,13 +309,15 @@ public:
 
     int count(int key) {return (int)contains(key);}
 
-    bool is_equal(set& first, set& second) {
-        std::queue<std::pair<node*, node*>> q;
+    bool is_equal(const set& first, const set& second) {
+        if(first.root == second.root)
+            return true;
 
+        std::queue<std::pair<node*, node*>> q;
         if(first.root != nullptr && second.root != nullptr)
             q.push(std::make_pair(first.root, second.root));
-        else if(first.root == nullptr && second.root == nullptr)
-            return true;
+        else 
+            return false;
 
         while(q.empty() == false) {
             node* f = q.front().first;
@@ -294,8 +336,7 @@ public:
         }
 
         return true;
-    }
-    
+    }   
 };
 
 int main(void) {
