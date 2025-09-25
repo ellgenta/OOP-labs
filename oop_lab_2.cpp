@@ -135,6 +135,13 @@ public:
             insert(array[i]);
     }
 
+    set(std::vector<int>::iterator first, std::vector<int>::iterator last) {
+        while(first != last) {
+            insert(*first);
+            first += 1;
+        }
+    }
+
     set(set& other) {
         std::queue<node*> q;
         if(other.root != nullptr)
