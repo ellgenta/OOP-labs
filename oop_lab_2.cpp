@@ -17,6 +17,7 @@ private:
         node(int v) {key = v;}
 
         node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
+
     };
 
     node* root = nullptr;
@@ -74,13 +75,12 @@ private:
                     if(it == it->parent->right) {
                         it = it->parent;
                         rotate_left(it);
-                        //parent = it->parent;
                     }
-                    //if(it->parent && it->parent->parent) {
+                    if(it->parent && it->parent->parent) {
                         it->parent->cl = black;
                         it->parent->parent->cl = red;
                         rotate_right(it->parent->parent);
-                    //}
+                    }
                 }
             } else {
                 node* uncle = it->parent->parent->left;
@@ -94,7 +94,7 @@ private:
                         it = it->parent;
                         rotate_right(it);
                     }
-                    if(it->parent) {
+                    if(it->parent && it->parent->parent) {
                         it->parent->cl = black;
                         it->parent->parent->cl = red;
                         rotate_left(it->parent->parent);
@@ -126,6 +126,14 @@ private:
         while(x->left != nullptr)
             x = x->left;
         return x;
+    }
+
+    void traverse(node* x, std::queue<int>& o) {
+        if(x == nullptr)
+            return;
+        traverse(x->left, o);
+        o.push(x->key);
+        traverse(x->right, o);
     }
 public:
     set() {}
@@ -321,27 +329,21 @@ public:
         if(first.root == second.root)
             return true;
 
-        std::queue<std::pair<node*, node*>> q;
-        if(first.root != nullptr && second.root != nullptr)
-            q.push(std::make_pair(first.root, second.root));
-        else 
-            return false;
+        std::queue<int> f;
+        std::queue<int> s;
 
-        while(q.empty() == false) {
-            node* f = q.front().first;
-            node* s = q.front().second;
+        traverse(first.root, f);
+        traverse(second.root, s);
 
-            if(f->key != s->key)
+        while(!f.empty() && !s.empty()) {
+            if(f.front() != s.front())
                 return false;
-            if(f->left && s->left)
-                q.push(std::make_pair(f->left, s->left));
-            else if(!f->left && s->left || !f->left && s->left)
-                return false;
-            if(f->right && s->right)
-                q.push(std::make_pair(f->right, s->right));
-            else if(!f->right && s->right || !f->right && s->right)
-                return false;
+            f.pop();
+            s.pop();
         }
+
+        if(!f.empty() || !s.empty())
+            return false;
 
         return true;
     }   
@@ -390,7 +392,7 @@ int main(void) {
 
     assert(F.empty() == false);
     assert(F.size() == 5);
-    //assert(F == E);
+    assert(F == E);
 
     delete[] b;
 
