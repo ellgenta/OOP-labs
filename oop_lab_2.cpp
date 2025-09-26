@@ -23,43 +23,41 @@ private:
     size_t sz = 0;
 
     void rotate_left(node* x) {
-        node* z = x->left;
-        node* g = x->parent->parent;
+        node* y = x->right;
+        x->right = y->left;
 
-        x->parent->right = z;
-        x->left = x->parent;
-        
-        if(g != nullptr) {
-            if(g->left == x->parent) 
-                g->left = x;
-            else 
-                g->right = x;
-        } else {
-            root = x;
-        }
-        
-        x->parent->parent = x;
-        x->parent = g;
+        if(y->left != nullptr)
+            y->left->parent= x;
+
+        y->parent = x->parent;
+        if(x->parent == nullptr)
+            root = y;
+        else if(x == x->parent->left)
+            x->parent->left = y;
+        else 
+            x->parent->right = y;
+
+        y->left = x;
+        x->parent = y;
     }
     
     void rotate_right(node* x) {
-        node* z = x->right;
-        node* g = x->parent->parent;
+        node* y = x->left;
+        x->left = y->right;
 
-        x->parent->left = z;
-        x->right = x->parent;
-        
-        if(g != nullptr) {
-            if(g->left == x->parent) 
-            g->left = x;
-            else 
-            g->right = x;
-        } else {
-            root = x;
-        }
-        
-        x->parent->parent = x;
-        x->parent = g;
+        if(y->right != nullptr)
+            y->right->parent= x;
+
+        y->parent = x->parent;
+        if(x->parent == nullptr)
+            root = y;
+        else if(x == x->parent->left)
+            x->parent->left = y;
+        else 
+            x->parent->right = y;
+            
+        y->right = x;
+        x->parent = y;
     }   
     
     void fix_insert(node* it) {
@@ -76,12 +74,13 @@ private:
                     if(it == it->parent->right) {
                         it = it->parent;
                         rotate_left(it);
+                        //parent = it->parent;
                     }
-                    if(it->parent && it->parent->parent) {
+                    //if(it->parent && it->parent->parent) {
                         it->parent->cl = black;
                         it->parent->parent->cl = red;
-                        rotate_right(it->parent);
-                    }
+                        rotate_right(it->parent->parent);
+                    //}
                 }
             } else {
                 node* uncle = it->parent->parent->left;
@@ -95,15 +94,13 @@ private:
                         it = it->parent;
                         rotate_right(it);
                     }
-                    if(it->parent && it->parent->parent) {
+                    if(it->parent) {
                         it->parent->cl = black;
                         it->parent->parent->cl = red;
-                        rotate_left(it->parent);
+                        rotate_left(it->parent->parent);
                     }
                 }
             }
-            if(it == root)
-            break;
         }
         root->cl = black;
     }
@@ -119,7 +116,10 @@ private:
     }
 
     void fix_erase(node* it) {
-
+        while(it != root && it->cl == black) {
+            
+        }
+        it->cl = black;
     }
 
     node* get_min(node* x) {
@@ -275,7 +275,7 @@ public:
             if(y->parent == it) 
                 x->parent = y;
             else {
-                transplant(y, y->right);
+                transplant(y, x);
                 y->right = it->right;
                 y->right->parent = y;
             }
@@ -286,6 +286,7 @@ public:
             y->cl = it->cl;
         }
 
+        delete it;
         if(y_cl == black)
             fix_erase(x);
 
@@ -353,7 +354,7 @@ int main(void) {
     assert(A.empty() == true);
     assert(A.size() == 0);
 
-    const int* b = new const int[5] {1, 2, 3, 4, 5};
+    const int* b = new const int[5] {1, 3, 2, 4, 5};
     set B(b, 5);
 
     assert(B.find(1) != nullptr);
@@ -383,6 +384,13 @@ int main(void) {
     assert(E.find(5) != nullptr);
     assert(E.empty() == false);
     assert(E.size() == 5);
+
+    std::vector<int> v = {5, 3, 2, 1, 4, 7, 6};
+    set F(v.begin(), v.begin()+5);
+
+    assert(F.empty() == false);
+    assert(F.size() == 5);
+    //assert(F == E);
 
     delete[] b;
 
