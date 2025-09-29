@@ -20,6 +20,50 @@ private:
 
     };
 
+    struct custom_queue {
+        node* head = nullptr;
+        node* tail = nullptr;
+
+        custom_queue() {}
+
+        custom_queue(node* head) {
+            this->head = head;
+            this->tail = head;
+        }
+
+        void push(int& key) {
+            if(head == nullptr) {
+                head = new node(key);
+                tail = new node(key);
+                return;
+            }
+            node* t = new node(key);
+            t->left = tail;
+            tail->right = t->left;
+            tail = t;
+        }
+
+        void pop() {
+            if(tail == head)
+                tail = nullptr;
+            node* x = head->right;
+            delete head;
+            head = x;
+        }
+    
+        int front() {
+            assert(head != nullptr);
+            return head->key;
+        }
+
+        int back() {
+            assert(tail != nullptr);
+            return head->key;
+        }
+
+        bool empty() {return head == nullptr;}
+    }; 
+
     node* root = nullptr;
     size_t sz = 0;
 
@@ -151,7 +195,7 @@ public:
     }
 
     set(set& other) {
-        std::queue<node*> q;
+        std::queue<node*> q; //update
         if(other.root != nullptr)
             q.push(other.root);
 
@@ -210,7 +254,7 @@ public:
         if(root == nullptr)
             return;
 
-        std::queue<node*> q;
+        std::queue<node*> q; //update, clear
         q.push(root);
         while(q.empty() == false) {
             if(q.front()->left != nullptr) 
@@ -335,17 +379,7 @@ public:
         traverse(first.root, f);
         traverse(second.root, s);
 
-        while(!f.empty() && !s.empty()) {
-            if(f.front() != s.front())
-                return false;
-            f.pop();
-            s.pop();
-        }
-
-        if(!f.empty() || !s.empty())
-            return false;
-
-        return true;
+        return f == s;
     }   
 };
 
