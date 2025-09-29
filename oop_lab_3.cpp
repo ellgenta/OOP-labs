@@ -1,72 +1,25 @@
+#include <iostream>
 #include <cassert>
-#include <queue>
 
-class set {
+using color = enum {red, black};
+
+struct node {
+    int key = 0;
+    color cl = black;
+    node* left = nullptr;
+    node* right = nullptr;
+    node* parent = nullptr;
+
+    node() {}
+
+    node(int v) {key = v;}
+
+    node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
+
+};
+
+class RB_Tree {
 private:
-    using color = enum {red, black};
-
-    struct node {
-        int key = 0;
-        color cl = black;
-        node* left = nullptr;
-        node* right = nullptr;
-        node* parent = nullptr;
-
-        node() {}
-
-        node(int v) {key = v;}
-
-        node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
-
-    };
-
-    struct custom_queue {
-        node* head = nullptr;
-        node* tail = nullptr;
-
-        custom_queue() {}
-
-        custom_queue(node* head) {
-            this->head = head;
-            this->tail = head;
-        }
-
-        void push(int& key) {
-            if(head == nullptr) {
-                head = new node(key);
-                tail = new node(key);
-                return;
-            }
-            node* t = new node(key);
-            t->left = tail;
-            tail->right = t->left;
-            tail = t;
-        }
-
-        void pop() {
-            if(tail == head)
-                tail = nullptr;
-            node* x = head->right;
-            delete head;
-            head = x;
-        }
-    
-        int front() {
-            assert(head != nullptr);
-            return head->key;
-        }
-
-        int back() {
-            assert(tail != nullptr);
-            return head->key;
-        }
-
-        bool empty() {return head == nullptr;}
-    }; 
-
-    node* root = nullptr;
-    size_t sz = 0;
-
     void rotate_left(node* x) {
         node* y = x->right;
         x->right = y->left;
@@ -172,107 +125,61 @@ private:
         return x;
     }
 
-    void traverse(node* x, std::queue<int>& o) {
-        if(x == nullptr)
+    void copy(node* src) {
+        if(src == nullptr)
             return;
-        traverse(x->left, o);
-        o.push(x->key);
-        traverse(x->right, o);
+        insert(src->key);
+        copy(src->left);
+        copy(src->right);
+    }
+
+    void _clear(node* r) {
+        if(r == nullptr)
+            return;
+        clear(r->left);
+        clear(r->right);
+        delete r;
     }
 public:
-    set() {}
+    node* root = nullptr;
 
-    set(const int* array, size_t size) {
-        for(size_t i = 0; i < size; i++)
-            insert(array[i]);
-    }
+    RB_Tree() {}
 
-    set(std::vector<int>::iterator first, std::vector<int>::iterator last) {
-        while(first != last) {
-            insert(*first);
-            first += 1;
-        }
-    }
+    RB_Tree(RB_Tree& other) {copy(other.root);}
 
-    set(set& other) {
-        std::queue<node*> q; //update
-        if(other.root != nullptr)
-            q.push(other.root);
-
-        while(q.empty() == false) {
-            insert(q.front()->key);
-            if(q.front()->left != nullptr)
-                q.push(q.front()->left);
-            if(q.front()->right != nullptr)
-                q.push(q.front()->right);
-            q.pop();
-        }
-    }
-
-    set(set&& other) {
+    RB_Tree(RB_Tree&& other) {
         root = other.root;
-        sz = other.sz;
-
         other.root = nullptr;
-        other.sz = 0;
     }
 
-    ~set() {clear();}
+    ~RB_Tree() {clear(root);}
 
-    set& operator=(const set& other) {
-        if(&other == this) 
-            return *this;
-
-        if(root != nullptr) 
-            clear();
-
-        std::queue<node*> q;
-        if(other.root != nullptr)
-            q.push(other.root);
-
-        while(q.empty() == false) {
-            insert(q.front()->key);
-            if(q.front()->left != nullptr)
-                q.push(q.front()->left);
-            if(q.front()->right != nullptr)
-                q.push(q.front()->right);
-            q.pop();
-        }
-
+    RB_Tree& operator=(RB_Tree& other) {
+        if(root != nullptr)
+            clear(root);
+        copy(other.root);
         return *this;
     }
 
-    bool operator==(const set& other) {
-        return is_equal(*this, other);
+    void clear(node* r) {
+        _clear(r);
+        r = nullptr;
     }
 
-    bool empty() {return sz == 0;}
-
-    size_t size() {return sz;}
-
-    void clear() {
-        if(root == nullptr)
-            return;
-
-        std::queue<node*> q; //update, clear
-        q.push(root);
-        while(q.empty() == false) {
-            if(q.front()->left != nullptr) 
-                q.push(q.front()->left);
-            if(q.front()->right != nullptr) 
-                q.push(q.front()->right);
-            delete q.front();
-            q.pop();
-        }
-
-        root = nullptr;
+    node* find(node* r, int key) {
+        if(r == nullptr)
+            return nullptr;
+        if(r->key < key)
+            return find(r->right, key);
+        else if(r->key > key)
+            return find(r->left, key);
+        return r;
     }
 
-    void insert(int key) {
+    bool insert(int key) {
         if(root == nullptr){
             root = new node(key);
-            sz += 1;
-            return;   
+            return true;   
         }
 
         node* it = root;
@@ -294,20 +201,20 @@ public:
         }
 
         if(it->key == key)
-            return;
+            return false;
         if(it->left && it->left->key == key)
             it = it->left;
         else 
             it = it->right;
 
         fix_insert(it);
-        sz += 1;
+        return true;
     }
 
-    void erase(int key) {
-        node* it = find(key);
+    bool erase(int key) {
+        node* it = find(root, key);
         if(it == nullptr)
-            return;
+            return false;
 
         node* y = it;
         node* x = nullptr;
@@ -341,45 +248,99 @@ public:
         delete it;
         if(y_cl == black)
             fix_erase(x);
-
-        sz -= 1;
+        return true;
     }
+
+    bool is_equal(node* lhs_r, node* rhs_r) {
+        if(!lhs_r && !rhs_r)
+            return true;
+        if(!lhs_r && rhs_r || lhs_r && !rhs_r)
+            return false;
+        if(lhs_r->key != rhs_r->key)
+            return false;
+        return is_equal(lhs_r->left, rhs_r->left) && is_equal(lhs_r->right, rhs_r->right);
+    }  
+
+    void swap(RB_Tree& other) {
+        std::swap(other.root, this->root);
+    }
+
+    friend void swap(RB_Tree& lhs, RB_Tree& rhs) {
+        node* t = lhs.root;
+        lhs.root = rhs.root;
+        rhs.root = t;
+    }
+};
+
+class set {
+private:
+    RB_Tree tree;
+    size_t sz = 0;
+public:
+    set() {}
+
+    set(const int* array, size_t size) {
+        for(size_t i = 0; i < size; i++)
+            insert(array[i]);
+    }
+
+    set(set& other) {
+        RB_Tree T(other.tree);
+        tree = T;
+        sz = other.sz;
+    }
+    set(set&& other) {
+        this->tree.root = other.tree.root;
+        this->sz = other.sz;
+        other.tree.root = nullptr;
+        other.sz = 0;
+    }
+
+    ~set() {}
+
+    set& operator=(set& other) {
+        if(&other != this) {
+            set cp(other);
+            swap(cp);
+        }
+        return *this;
+    }
+
+    set& operator=(set&& other) {
+        swap(other);
+        return *this;
+    }
+
+    bool operator==(const set& other) {
+        return is_equal(*this, other);
+    }
+
+    node* find(int key) {return tree.find(tree.root, key);}
+
+    void insert(int key) {sz += (int)tree.insert(key);}
+
+    void erase(int key) {sz -= (int)tree.erase(key);}
+
+    void clear() {
+        tree.clear(tree.root);
+        sz = 0;
+    }
+
+    bool empty() {return sz == 0;}
+
+    size_t size() {return sz;}
 
     void swap(set& other) {
-        std::swap(other.root, this->root);
+        std::swap(other.tree.root, this->tree.root);
         std::swap(other.sz, this->sz); 
-    }
-
-    node* find(int key) {
-        node* it = root;
-
-        while(it != nullptr) {
-            if(it->key > key)
-                it = it->left;
-            else if(it->key < key)
-                it = it->right;
-            else
-                break;
-        }
-
-        return it;
     }
 
     bool contains(int key) {return find(key) != nullptr;}
 
     int count(int key) {return (int)contains(key);}
 
-    bool is_equal(const set& first, const set& second) {
-        if(first.root == second.root)
-            return true;
-
-        std::queue<int> f;
-        std::queue<int> s;
-
-        traverse(first.root, f);
-        traverse(second.root, s);
-
-        return f == s;
+    bool is_equal(const set& lhs, const set& rhs) {
+        return tree.is_equal(lhs.tree.root, rhs.tree.root);
     }   
 };
 
@@ -404,7 +365,7 @@ int main(void) {
     assert(B.size() == 0);
     assert(C.empty() == false);
     assert(C.size() == 5);
-
+    
     set D(C);
     assert(D.empty() == false);
     assert(D.size() == 5);
@@ -413,20 +374,14 @@ int main(void) {
     assert(C.find(3) != nullptr);
     assert(D.find(3) != nullptr);
     assert(D.find(3) != C.find(3));
-
+    
     set E;
     E = C;
     assert(E.find(1) != nullptr);
     assert(E.find(5) != nullptr);
     assert(E.empty() == false);
     assert(E.size() == 5);
-
-    std::vector<int> v = {5, 3, 2, 1, 4, 7, 6};
-    set F(v.begin(), v.begin()+5);
-
-    assert(F.empty() == false);
-    assert(F.size() == 5);
-    assert(F == E);
+    assert(E == C);
 
     delete[] b;
 
