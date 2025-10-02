@@ -251,14 +251,14 @@ public:
         return true;
     }
 
-    bool is_equal(node* lhs_r, node* rhs_r) {
-        if(!lhs_r && !rhs_r)
+    bool is_equal(node* lhs, node* rhs) {
+        if(!lhs && !rhs)
             return true;
-        if(!lhs_r && rhs_r || lhs_r && !rhs_r)
+        if(!lhs && rhs || lhs && !rhs)
             return false;
-        if(lhs_r->key != rhs_r->key)
+        if(lhs->key != rhs->key)
             return false;
-        return is_equal(lhs_r->left, rhs_r->left) && is_equal(lhs_r->right, rhs_r->right);
+        return is_equal(lhs->left, rhs->left) && is_equal(lhs->right, rhs->right);
     }  
 
     void swap(RB_Tree& other) {
@@ -266,9 +266,9 @@ public:
     }
 
     friend void swap(RB_Tree& lhs, RB_Tree& rhs) {
-        node* t = lhs.root;
-        lhs.root = rhs.root;
-        rhs.root = t;
+        RB_Tree temp = lhs;
+        lhs = rhs;
+        rhs = temp;
     }
 };
 
@@ -276,6 +276,13 @@ class set {
 private:
     RB_Tree tree;
     size_t sz = 0;
+
+    void push_keys(node* r, int* cnt, size_t& pos) const {
+        if(r == nullptr) return;
+        push_keys(r->left, cnt, pos);
+        cnt[pos++] = r->key;
+        push_keys(r->right, cnt, pos);
+    }
 public:
     set() {}
 
@@ -289,6 +296,7 @@ public:
         tree = T;
         sz = other.sz;
     }
+
     set(set&& other) {
         this->tree.root = other.tree.root;
         this->sz = other.sz;
@@ -308,6 +316,7 @@ public:
 
     set& operator=(set&& other) {
         swap(other);
+        other.clear();
         return *this;
     }
 
@@ -315,6 +324,61 @@ public:
         return is_equal(*this, other);
     }
 
+    bool operator!=(const set& other) {
+        return is_equal(*this, other) == false;
+    }
+
+    int operator<=>(const set& other) {
+        int* this_keys = new int[this->sz];
+        int* other_keys = new int[other.sz];
+        
+        size_t t_sz = 0;
+        size_t o_sz = 0;
+        push_keys(this->tree.root, this_keys, t_sz);
+        push_keys(other.tree.root, other_keys, o_sz);
+        
+        for(size_t i = 0; i < t_sz && i < o_sz; i++) {
+            if(this_keys[i] < other_keys[i]) return -1;
+            if(this_keys[i] > other_keys[i]) return 1;
+        }
+        
+        if(t_sz < o_sz) return -1;
+        if(t_sz > o_sz) return 1;
+        return 0;
+    }
+    
+    friend std::ostream& operator<<(std::ostream& os, const set& obj) {
+        int* buf = new int[obj.sz];
+        size_t p = 0;
+
+        obj.push_keys(obj.tree.root, buf, p); 
+        os << "[" << obj.sz << "]" << " { ";
+
+        for(size_t i = 0; i < obj.sz; i++) {
+            os << buf[i];
+            if(i != obj.sz - 1)
+                os << ", ";
+            else 
+                os << " ";
+        }
+
+        os << "}" << std::endl;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, set& obj) {
+        size_t s = 0;
+        is >> s;
+        if(s != 0) {
+            int key = 0;
+            for(size_t i = 0; i < s; i++) {
+                is >> key;
+                obj.insert(key);
+            }
+        }
+        return is;
+    }
+    
     node* find(int key) {return tree.find(tree.root, key);}
 
     void insert(int key) {sz += (int)tree.insert(key);}
@@ -331,8 +395,13 @@ public:
     size_t size() {return sz;}
 
     void swap(set& other) {
+        //std::swap(this->tree, other.tree);
         std::swap(other.tree.root, this->tree.root);
         std::swap(other.sz, this->sz); 
+    }
+
+    friend void swap(set& lhs, set& rhs) {
+        lhs.swap(rhs);
     }
 
     bool contains(int key) {return find(key) != nullptr;}
@@ -345,43 +414,26 @@ public:
 };
 
 int main(void) {
-    set A;
-    
-    assert(A.find(0) == nullptr);
-    assert(A.empty() == true);
-    assert(A.size() == 0);
-
     const int* b = new const int[5] {1, 3, 2, 4, 5};
+    
+    set A;
     set B(b, 5);
-
-    assert(B.find(1) != nullptr);
-    assert(B.find(5) != nullptr);
-    assert(B.empty() == false);
-    assert(B.size() == 5);
-
-    set C(std::move(B));
-
-    assert(B.empty() == true);
-    assert(B.size() == 0);
-    assert(C.empty() == false);
-    assert(C.size() == 5);
+    set C = B;
     
-    set D(C);
-    assert(D.empty() == false);
-    assert(D.size() == 5);
-    assert(C.empty() == false);
-    assert(C.size() == 5);
-    assert(C.find(3) != nullptr);
-    assert(D.find(3) != nullptr);
-    assert(D.find(3) != C.find(3));
-    
+    assert((A <=> B) == -1);
+    assert((B <=> B) == 0);
+    assert((B <=> C) == 0);
+    assert((C <=> A) == 1);
+    assert(B == C);
+    assert(A != B);
+
+    set D = std::move(C);
+    assert(D == B);
+    assert(A == C);
+
     set E;
-    E = C;
-    assert(E.find(1) != nullptr);
-    assert(E.find(5) != nullptr);
-    assert(E.empty() == false);
-    assert(E.size() == 5);
-    assert(E == C);
+    std::cin >> E;
+    std::cout << A << B << E;
 
     delete[] b;
 
