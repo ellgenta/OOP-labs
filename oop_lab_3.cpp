@@ -1,4 +1,5 @@
 #include <iostream>
+#include <compare>
 #include <cassert>
 
 using color = enum {red, black};
@@ -136,8 +137,8 @@ private:
     void _clear(node* r) {
         if(r == nullptr)
             return;
-        clear(r->left);
-        clear(r->right);
+        _clear(r->left);
+        _clear(r->right);
         delete r;
     }
 public:
@@ -152,18 +153,18 @@ public:
         other.root = nullptr;
     }
 
-    ~RB_Tree() {clear(root);}
+    ~RB_Tree() {_clear(root);}
 
     RB_Tree& operator=(RB_Tree& other) {
         if(root != nullptr)
-            clear(root);
+            {_clear(root); root=nullptr;}
         copy(other.root);
         return *this;
     }
 
-    void clear(node* r) {
-        _clear(r);
-        r = nullptr;
+    void clear() {
+        _clear(root);
+        root = nullptr;
     }
 
     node* find(node* r, int key) {
@@ -254,7 +255,7 @@ public:
     bool is_equal(node* lhs, node* rhs) {
         if(!lhs && !rhs)
             return true;
-        if(!lhs && rhs || lhs && !rhs)
+        if((!lhs && rhs) || (lhs && !rhs))
             return false;
         if(lhs->key != rhs->key)
             return false;
@@ -290,7 +291,7 @@ public:
         for(size_t i = 0; i < size; i++)
             insert(array[i]);
     }
-
+   
     set(set& other) {
         RB_Tree T(other.tree);
         tree = T;
@@ -325,26 +326,28 @@ public:
     }
 
     bool operator!=(const set& other) {
-        return is_equal(*this, other) == false;
+        return !(*this == other);
     }
 
-    int operator<=>(const set& other) {
-        int* this_keys = new int[this->sz];
+    friend std::strong_ordering operator<=>(const set& t, const set& other) {
+        int* this_keys = new int[t.sz];
         int* other_keys = new int[other.sz];
         
         size_t t_sz = 0;
         size_t o_sz = 0;
-        push_keys(this->tree.root, this_keys, t_sz);
-        push_keys(other.tree.root, other_keys, o_sz);
+        t.push_keys(t.tree.root, this_keys, t_sz);
+        t.push_keys(other.tree.root, other_keys, o_sz);
         
         for(size_t i = 0; i < t_sz && i < o_sz; i++) {
-            if(this_keys[i] < other_keys[i]) return -1;
-            if(this_keys[i] > other_keys[i]) return 1;
+            if(this_keys[i] < other_keys[i]) 
+                return std::strong_ordering::less;
+            if(this_keys[i] > other_keys[i]) 
+                return std::strong_ordering::greater;
         }
         
-        if(t_sz < o_sz) return -1;
-        if(t_sz > o_sz) return 1;
-        return 0;
+        if(t_sz < o_sz) return std::strong_ordering::less;
+        if(t_sz > o_sz) return std::strong_ordering::greater;
+        return std::strong_ordering::equal;
     }
     
     friend std::ostream& operator<<(std::ostream& os, const set& obj) {
@@ -386,7 +389,7 @@ public:
     void erase(int key) {sz -= (int)tree.erase(key);}
 
     void clear() {
-        tree.clear(tree.root);
+        tree.clear();
         sz = 0;
     }
 
@@ -395,7 +398,6 @@ public:
     size_t size() {return sz;}
 
     void swap(set& other) {
-        //std::swap(this->tree, other.tree);
         std::swap(other.tree.root, this->tree.root);
         std::swap(other.sz, this->sz); 
     }
@@ -419,12 +421,11 @@ int main(void) {
     set A;
     set B(b, 5);
     set C = B;
-    
-    assert((A <=> B) == -1);
-    assert((B <=> B) == 0);
-    assert((B <=> C) == 0);
-    assert((C <=> A) == 1);
+
+    assert(A < B);
+    assert(B == B);
     assert(B == C);
+    assert(C > A);
     assert(A != B);
 
     set D = std::move(C);
