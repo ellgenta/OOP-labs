@@ -18,6 +18,100 @@ struct node {
 
 };
 
+class iterator {
+private:
+    node* ptr = nullptr;
+    node* prev = nullptr;
+public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = node;
+    using pointer = node*;
+    using reference = node&;
+    
+    iterator() {}
+    
+    iterator(const iterator& other) {
+        ptr = other.ptr;  
+        prev = other.prev;  
+    }
+    
+    iterator(node* ptr_other, node* prev_other) {
+        ptr = ptr_other;
+        prev = prev_other;
+    }
+    
+    ~iterator() = default;
+    
+    iterator& operator++() {
+        iterator temp(*this);
+
+        if(ptr == nullptr && prev == nullptr)
+            return *this;
+        if(ptr == nullptr && prev != nullptr) 
+            ptr = prev->right;
+        else if(ptr->parent == prev) {
+            if(ptr->left != nullptr) {
+                prev = ptr;
+                ptr = ptr->left;
+            }
+            else if(ptr->left == nullptr && ptr->right == nullptr) {
+                prev = ptr;
+                ptr = ptr->parent;
+            }
+            else if(ptr->right == nullptr) {
+                prev = ptr;
+                ptr = ptr->right;
+            }
+        }
+        else if(ptr->left == prev) {
+            prev = ptr;
+            ptr = ptr->right;
+        }
+        else if(ptr->right == prev) {
+            prev = ptr;
+            ptr = ptr->parent;
+        }
+        return temp;
+    }
+
+    iterator operator++(int) {
+        if(ptr == nullptr && prev == nullptr)
+            return *this;
+        if(ptr == nullptr && prev != nullptr) 
+            ptr = prev->right;
+        else if(ptr->parent == prev) {
+            if(ptr->left != nullptr) {
+                prev = ptr;
+                ptr = ptr->left;
+            }
+            else if(ptr->left == nullptr && ptr->right == nullptr) {
+                prev = ptr;
+                ptr = ptr->parent;
+            }
+            else if(ptr->right == nullptr) {
+                prev = ptr;
+                ptr = ptr->right;
+            }
+        }
+        else if(ptr->left == prev) {
+            prev = ptr;
+            ptr = ptr->right;
+        }
+        else if(ptr->right == prev) {
+            prev = ptr;
+            ptr = ptr->parent;
+        }
+        return *this;
+    }
+
+    iterator &operator--();
+    iterator operator--(int);
+    int& operator*();
+    int* operator->();
+    friend bool operator==(const iterator &, const iterator &);
+    friend bool operator!=(const iterator &, const iterator &);
+};
+
 class RB_Tree {
 private:
     void rotate_left(node* x) {
