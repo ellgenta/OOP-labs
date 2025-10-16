@@ -16,105 +16,12 @@ struct node {
     node(int v) {key = v;}
 
     node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
-
-};
-
-class iterator {
-private:
-    node* ptr = nullptr;
-    node* prev = nullptr;
-public:
-    using iterator_category = std::forward_iterator_tag;
-    using value_type = node;
-    using pointer = node*;
-    using reference = node&;
-    
-    iterator() {}
-    
-    iterator(const iterator& other) {
-        ptr = other.ptr;  
-        prev = other.prev;  
-    }
-    
-    iterator(node* ptr_other, node* prev_other) {
-        ptr = ptr_other;
-        prev = prev_other;
-    }
-    
-    ~iterator() = default;
-    
-    iterator& operator++() {
-        iterator temp(*this);
-
-        if(ptr == nullptr && prev == nullptr)
-            return *this;
-        if(ptr == nullptr && prev != nullptr) 
-            ptr = prev->right;
-        else if(ptr->parent == prev) {
-            if(ptr->left != nullptr) {
-                prev = ptr;
-                ptr = ptr->left;
-            }
-            else if(ptr->left == nullptr && ptr->right == nullptr) {
-                prev = ptr;
-                ptr = ptr->parent;
-            }
-            else if(ptr->right == nullptr) {
-                prev = ptr;
-                ptr = ptr->right;
-            }
-        }
-        else if(ptr->left == prev) {
-            prev = ptr;
-            ptr = ptr->right;
-        }
-        else if(ptr->right == prev) {
-            prev = ptr;
-            ptr = ptr->parent;
-        }
-        return temp;
-    }
-
-    iterator operator++(int) {
-        if(ptr == nullptr && prev == nullptr)
-            return *this;
-        if(ptr == nullptr && prev != nullptr) 
-            ptr = prev->right;
-        else if(ptr->parent == prev) {
-            if(ptr->left != nullptr) {
-                prev = ptr;
-                ptr = ptr->left;
-            }
-            else if(ptr->left == nullptr && ptr->right == nullptr) {
-                prev = ptr;
-                ptr = ptr->parent;
-            }
-            else if(ptr->right == nullptr) {
-                prev = ptr;
-                ptr = ptr->right;
-            }
-        }
-        else if(ptr->left == prev) {
-            prev = ptr;
-            ptr = ptr->right;
-        }
-        else if(ptr->right == prev) {
-            prev = ptr;
-            ptr = ptr->parent;
-        }
-        return *this;
-    }
-
-    iterator &operator--();
-    iterator operator--(int);
-    int& operator*();
-    int* operator->();
-    friend bool operator==(const iterator &, const iterator &);
-    friend bool operator!=(const iterator &, const iterator &);
 };
 
 class RB_Tree {
 private:
+    node* max = nullptr;
+
     void rotate_left(node* x) {
         node* y = x->right;
         x->right = y->left;
@@ -236,6 +143,109 @@ private:
         delete r;
     }
 public:
+    class iterator {
+    private:
+        node* curr = nullptr;
+        node* prev = nullptr;
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = node;
+        
+        iterator() {}
+        
+        iterator(const iterator& other) {
+            curr = other.curr;  
+            prev = other.prev;  
+        }
+
+        iterator(const iterator&& other) {
+            curr = other.curr;  
+            prev = other.prev;  
+        }
+        
+        iterator(node* ptr_other, node* prev_other) {
+            curr = ptr_other;
+            prev = prev_other;
+        }
+        
+        ~iterator() = default;
+        
+        iterator& operator++() {
+            if(curr == nullptr)
+                return *this;
+            else if(curr->left == nullptr && curr->right == nullptr) {
+                prev = curr;
+                while(curr && curr->key <= prev->key)
+                    curr = curr->parent;
+            } 
+            else if(curr->right != nullptr) {
+                prev = curr;
+                curr = curr->right;
+                while(curr->left != nullptr)
+                    curr = curr->left;
+            }
+            else if(prev == curr->left && curr->right == nullptr) {
+                prev = curr;
+                while(curr && curr->key <= prev->key)
+                    curr = curr->parent;
+            } 
+            return *this;
+        }
+
+        iterator operator++(int) {
+            iterator temp = *this;
+            ++(*this);
+            return temp;
+        }
+
+        iterator &operator--() {
+            if(curr == nullptr) {
+                curr = prev;
+                return *this;
+            }
+
+            else if(curr->left == nullptr && curr->right == nullptr) {
+                prev = curr;
+                while(curr && curr->key >= prev->key)
+                    curr = curr->parent;
+            } 
+            else if(curr->left != nullptr) {
+                prev = curr;
+                curr = curr->left;
+                while(curr->right != nullptr)
+                    curr = curr->right;
+            }
+            else if(prev == curr->right && curr->left == nullptr) {
+                prev = curr;
+                while(curr && curr->key >= prev->key)
+                    curr = curr->parent;
+            } 
+            return *this;
+        }
+
+        iterator operator--(int) {
+            iterator temp = *this;
+            --(*this);
+            return temp;
+        }
+
+        const int& operator*() {
+            assert(curr != nullptr);
+            return curr->key;
+        }
+
+        const node* operator->() {
+            return curr;
+        }
+
+        friend bool operator==(const iterator &lhs, const iterator &rhs) {
+            return lhs.curr == rhs.curr;
+        }
+
+        friend bool operator!=(const iterator &lhs, const iterator &rhs) {
+            return lhs.curr != rhs.curr;
+        }
+    };
     node* root = nullptr;
 
     RB_Tree() {}
@@ -259,6 +269,14 @@ public:
     void clear() {
         _clear(root);
         root = nullptr;
+    }
+
+    iterator find(int key) {
+        iterator it = begin();
+        iterator en = end();
+        while(it != en && *it != key)
+            it++;
+        return it;
     }
 
     node* find(node* r, int key) {
@@ -365,6 +383,22 @@ public:
         lhs = rhs;
         rhs = temp;
     }
+
+    const iterator begin() {
+        node* temp = root;
+        while(temp != nullptr && temp->left != nullptr)
+            temp = temp->left;
+        iterator t{temp, nullptr};
+        return t;
+    }
+
+    const iterator end() {  
+        node* temp = root;
+        while(temp != nullptr && temp->right != nullptr)
+            temp = temp->right;
+        iterator t{nullptr, temp};
+        return t;
+    }
 };
 
 class set {
@@ -379,6 +413,8 @@ private:
         push_keys(r->right, cnt, pos);
     }
 public:
+    using iterator = RB_Tree::iterator;
+
     set() {}
 
     set(const int* array, size_t size) {
@@ -476,7 +512,7 @@ public:
         return is;
     }
     
-    node* find(int key) {return tree.find(tree.root, key);}
+    RB_Tree::iterator find(int key) {return tree.find(key);}
 
     void insert(int key) {sz += (int)tree.insert(key);}
 
@@ -500,13 +536,17 @@ public:
         lhs.swap(rhs);
     }
 
-    bool contains(int key) {return find(key) != nullptr;}
+    bool contains(int key) {return find(key) != end();}
 
     int count(int key) {return (int)contains(key);}
 
     bool is_equal(const set& lhs, const set& rhs) {
         return tree.is_equal(lhs.tree.root, rhs.tree.root);
     }   
+
+    RB_Tree::iterator begin() {return tree.begin();}
+
+    RB_Tree::iterator end() {return tree.end();}
 };
 
 int main(void) {
@@ -516,19 +556,28 @@ int main(void) {
     set B(b, 5);
     set C = B;
 
-    assert(A < B);
-    assert(B == B);
-    assert(B == C);
-    assert(C > A);
-    assert(A != B);
+    set::iterator _a = B.find(1);
+    set::iterator _b = B.find(3);
+    set::iterator _c = B.find(2);
+    set::iterator _d = B.find(4);
+    set::iterator _e = B.find(5);
+    set::iterator _f = B.find(0);
 
-    set D = std::move(C);
-    assert(D == B);
-    assert(A == C);
+    assert(_a == B.begin());
+    assert(*_a == 1);
+    assert(*_b == 3);
+    assert(*_c == 2);
+    assert(*_d == 4);
+    assert(*_e == 5);
+    assert(_f == B.end());
 
-    set E;
-    std::cin >> E;
-    std::cout << A << B << E;
+    for(auto n : B)
+        std::cout << n << " ";
+
+    size_t i = 0;
+    std::cout << "\n";
+    for(auto it = --B.end(); i < B.size(); --it, ++i) 
+        std::cout << *it << " ";
 
     delete[] b;
 
