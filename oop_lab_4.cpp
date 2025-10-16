@@ -229,6 +229,12 @@ public:
             return temp;
         }
 
+        iterator& operator=(iterator& other) {
+            curr = other.curr;
+            prev = other.prev;
+            return *this;
+        }
+
         const int& operator*() {
             assert(curr != nullptr);
             return curr->key;
@@ -384,7 +390,7 @@ public:
         rhs = temp;
     }
 
-    const iterator begin() {
+    iterator begin() {
         node* temp = root;
         while(temp != nullptr && temp->left != nullptr)
             temp = temp->left;
@@ -392,11 +398,27 @@ public:
         return t;
     }
 
-    const iterator end() {  
+    iterator end() {  
         node* temp = root;
         while(temp != nullptr && temp->right != nullptr)
             temp = temp->right;
         iterator t{nullptr, temp};
+        return t;
+    }
+
+    iterator rbegin() {
+        node* temp = root;
+        while(temp != nullptr && temp->left != nullptr)
+            temp = temp->left;
+        iterator t{nullptr, temp};
+        return t;
+    }
+
+    iterator rend() {  
+        node* temp = root;
+        while(temp != nullptr && temp->right != nullptr)
+            temp = temp->right;
+        iterator t{temp, temp != nullptr ? temp->parent : nullptr};
         return t;
     }
 };
@@ -433,6 +455,16 @@ public:
         this->sz = other.sz;
         other.tree.root = nullptr;
         other.sz = 0;
+    }
+
+    set(std::initializer_list<int> l) {
+        for(auto n : l)
+            insert(n);
+    }
+
+    set(iterator st, iterator fn) {
+        while(st != fn) 
+            insert(*st++);
     }
 
     ~set() {}
@@ -547,6 +579,10 @@ public:
     RB_Tree::iterator begin() {return tree.begin();}
 
     RB_Tree::iterator end() {return tree.end();}
+
+    RB_Tree::iterator rbegin() {return tree.rbegin();}
+
+    RB_Tree::iterator rend() {return tree.rend();}
 };
 
 int main(void) {
@@ -574,12 +610,28 @@ int main(void) {
     for(auto n : B)
         std::cout << n << " ";
 
-    size_t i = 0;
     std::cout << "\n";
-    for(auto it = --B.end(); i < B.size(); --it, ++i) 
+
+    for(auto it = B.rend(); it != B.rbegin(); --it) 
         std::cout << *it << " ";
 
     delete[] b;
+
+    std::cout << "\n";
+
+    set __a({19, 47, 74, 91});
+    for (auto it = __a.begin(); it != __a.end(); ++it) std::cout << *it << " ";
+
+    std::cout << "\n";
+
+    set __b(__a.begin(), __a.end());
+    assert(__a == __b);
+    for (auto &&it : __b) std::cout << it << " ";
+
+    std::cout << "\n";
+
+    //set c(__a.rbegin(), __a.rend());
+    //for (auto &&it : c) std::cout << it << " ";
 
     return 0;
 }
