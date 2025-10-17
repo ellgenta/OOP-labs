@@ -149,7 +149,7 @@ public:
         node* prev = nullptr;
     public:
         using iterator_category = std::forward_iterator_tag;
-        using value_type = node;
+        using value_type = int;
         
         iterator() {}
         
@@ -173,22 +173,19 @@ public:
         iterator& operator++() {
             if(curr == nullptr)
                 return *this;
-            else if(curr->left == nullptr && curr->right == nullptr) {
+
+            if(curr->right == nullptr) {
                 prev = curr;
                 while(curr && curr->key <= prev->key)
                     curr = curr->parent;
             } 
-            else if(curr->right != nullptr) {
+            else {
                 prev = curr;
                 curr = curr->right;
                 while(curr->left != nullptr)
                     curr = curr->left;
             }
-            else if(prev == curr->left && curr->right == nullptr) {
-                prev = curr;
-                while(curr && curr->key <= prev->key)
-                    curr = curr->parent;
-            } 
+            
             return *this;
         }
 
@@ -204,22 +201,18 @@ public:
                 return *this;
             }
 
-            else if(curr->left == nullptr && curr->right == nullptr) {
+            if(curr->left == nullptr) {
                 prev = curr;
                 while(curr && curr->key >= prev->key)
                     curr = curr->parent;
             } 
-            else if(curr->left != nullptr) {
+            else {
                 prev = curr;
                 curr = curr->left;
                 while(curr->right != nullptr)
                     curr = curr->right;
             }
-            else if(prev == curr->right && curr->left == nullptr) {
-                prev = curr;
-                while(curr && curr->key >= prev->key)
-                    curr = curr->parent;
-            } 
+            
             return *this;
         }
 
@@ -227,12 +220,6 @@ public:
             iterator temp = *this;
             --(*this);
             return temp;
-        }
-
-        iterator& operator=(iterator& other) {
-            curr = other.curr;
-            prev = other.prev;
-            return *this;
         }
 
         const int& operator*() {
@@ -244,6 +231,12 @@ public:
             return curr;
         }
 
+        iterator& operator=(iterator &other) {
+            curr = other.curr;
+            prev = other.prev; 
+            return other;
+        }
+
         friend bool operator==(const iterator &lhs, const iterator &rhs) {
             return lhs.curr == rhs.curr;
         }
@@ -252,6 +245,70 @@ public:
             return lhs.curr != rhs.curr;
         }
     };
+
+    class reverse_iterator {
+    private:
+        iterator it;
+    public:
+        //using iterator_category = ;
+        using value_type = int;
+        
+        reverse_iterator() {}
+
+        reverse_iterator(const iterator& other) : it(other) {}
+        
+        reverse_iterator(const reverse_iterator& other) : it(other.it) {}
+
+        reverse_iterator(const reverse_iterator&& other) : it(other.it) {}
+        
+        reverse_iterator(node* ptr_other, node* prev_other) {it:(ptr_other, prev_other);}
+        
+        ~reverse_iterator() = default;
+        
+        reverse_iterator& operator++() {
+            --it;
+            return *this;
+        }
+
+        reverse_iterator operator++(int) {
+            it--;
+            return *this;
+        }
+
+        reverse_iterator& operator--() {
+            ++it;
+            return *this;
+        }
+
+        reverse_iterator operator--(int) {
+            it++;
+            return *this;
+        }
+
+        reverse_iterator& operator=(reverse_iterator& other) {
+            it = other.it;
+            return *this;
+        }
+
+        const int& operator*() {
+            return *it;
+        }
+
+        /*
+        const node* operator->() {
+            return it->;
+        }
+        */
+
+        friend bool operator==(const reverse_iterator &lhs, const reverse_iterator &rhs) {
+            return lhs.it == rhs.it;
+        }
+
+        friend bool operator!=(const reverse_iterator &lhs, const reverse_iterator &rhs) {
+            return lhs.it != rhs.it;
+        }
+    };
+
     node* root = nullptr;
 
     RB_Tree() {}
@@ -406,21 +463,22 @@ public:
         return t;
     }
 
-    iterator rbegin() {
-        node* temp = root;
-        while(temp != nullptr && temp->left != nullptr)
-            temp = temp->left;
-        iterator t{nullptr, temp};
-        return t;
-    }
-
-    iterator rend() {  
+    reverse_iterator rbegin() {
         node* temp = root;
         while(temp != nullptr && temp->right != nullptr)
             temp = temp->right;
         iterator t{temp, temp != nullptr ? temp->parent : nullptr};
-        return t;
+        return reverse_iterator(t);
     }
+
+    reverse_iterator rend() {  
+        node* temp = root;
+        while(temp != nullptr && temp->left != nullptr)
+            temp = temp->left;
+        iterator t{nullptr, temp};
+        return reverse_iterator(t);
+    }
+
 };
 
 class set {
@@ -436,6 +494,7 @@ private:
     }
 public:
     using iterator = RB_Tree::iterator;
+    using reverse_iterator = RB_Tree::reverse_iterator;
 
     set() {}
 
@@ -463,8 +522,17 @@ public:
     }
 
     set(iterator st, iterator fn) {
-        while(st != fn) 
-            insert(*st++);
+        while(st != fn) {
+            insert(*st);
+            st++;
+        }
+    }
+
+    set(reverse_iterator st, reverse_iterator fn) {
+        while(st != fn) {
+            insert(*st);
+            st++;
+        }
     }
 
     ~set() {}
@@ -580,9 +648,9 @@ public:
 
     RB_Tree::iterator end() {return tree.end();}
 
-    RB_Tree::iterator rbegin() {return tree.rbegin();}
+    RB_Tree::reverse_iterator rbegin() {return tree.rbegin();}
 
-    RB_Tree::iterator rend() {return tree.rend();}
+    RB_Tree::reverse_iterator rend() {return tree.rend();}
 };
 
 int main(void) {
@@ -612,7 +680,7 @@ int main(void) {
 
     std::cout << "\n";
 
-    for(auto it = B.rend(); it != B.rbegin(); --it) 
+    for(auto it = B.rbegin(); it != B.rend(); ++it) 
         std::cout << *it << " ";
 
     delete[] b;
@@ -630,8 +698,8 @@ int main(void) {
 
     std::cout << "\n";
 
-    //set c(__a.rbegin(), __a.rend());
-    //for (auto &&it : c) std::cout << it << " ";
+    set c(__a.rbegin(), __a.rend());
+    for (auto &&it : c) std::cout << it << " ";
 
     return 0;
 }
