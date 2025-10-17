@@ -2,24 +2,25 @@
 #include <compare>
 #include <cassert>
 
-using color = enum {red, black};
-
-struct node {
-    int key = 0;
-    color cl = black;
-    node* left = nullptr;
-    node* right = nullptr;
-    node* parent = nullptr;
-
-    node() {}
-
-    node(int v) {key = v;}
-
-    node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
-};
 
 class RB_Tree {
 private:
+    using color = enum {red, black};
+    
+    struct node {
+        int key = 0;
+        color cl = black;
+        node* left = nullptr;
+        node* right = nullptr;
+        node* parent = nullptr;
+    
+        node() {}
+    
+        node(int v) {key = v;}
+    
+        node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
+    };
+
     node* max = nullptr;
 
     void rotate_left(node* x) {
@@ -238,11 +239,11 @@ public:
         }
 
         friend bool operator==(const iterator &lhs, const iterator &rhs) {
-            return lhs.curr == rhs.curr;
+            return lhs.curr == rhs.curr && lhs.prev == rhs.prev;
         }
 
         friend bool operator!=(const iterator &lhs, const iterator &rhs) {
-            return lhs.curr != rhs.curr;
+            return lhs.curr != rhs.curr && lhs.prev != rhs.prev;
         }
     };
 
@@ -250,7 +251,7 @@ public:
     private:
         iterator it;
     public:
-        //using iterator_category = ;
+        using iterator_category = std::bidirectional_iterator_tag;
         using value_type = int;
         
         reverse_iterator() {}
@@ -334,7 +335,7 @@ public:
         root = nullptr;
     }
 
-    iterator find(int key) {
+    iterator find(int key) const {
         iterator it = begin();
         iterator en = end();
         while(it != en && *it != key)
@@ -342,7 +343,7 @@ public:
         return it;
     }
 
-    node* find(node* r, int key) {
+    node* find(node* r, int key) const {
         if(r == nullptr)
             return nullptr;
         if(r->key < key)
@@ -427,7 +428,7 @@ public:
         return true;
     }
 
-    bool is_equal(node* lhs, node* rhs) {
+    bool is_equal(node* lhs, node* rhs) const {
         if(!lhs && !rhs)
             return true;
         if((!lhs && rhs) || (lhs && !rhs))
@@ -447,7 +448,7 @@ public:
         rhs = temp;
     }
 
-    iterator begin() {
+    iterator begin() const {
         node* temp = root;
         while(temp != nullptr && temp->left != nullptr)
             temp = temp->left;
@@ -455,7 +456,7 @@ public:
         return t;
     }
 
-    iterator end() {  
+    iterator end() const {  
         node* temp = root;
         while(temp != nullptr && temp->right != nullptr)
             temp = temp->right;
@@ -463,7 +464,7 @@ public:
         return t;
     }
 
-    reverse_iterator rbegin() {
+    reverse_iterator rbegin() const {
         node* temp = root;
         while(temp != nullptr && temp->right != nullptr)
             temp = temp->right;
@@ -471,27 +472,19 @@ public:
         return reverse_iterator(t);
     }
 
-    reverse_iterator rend() {  
+    reverse_iterator rend() const {  
         node* temp = root;
         while(temp != nullptr && temp->left != nullptr)
             temp = temp->left;
         iterator t{nullptr, temp};
         return reverse_iterator(t);
     }
-
 };
 
 class set {
 private:
     RB_Tree tree;
     size_t sz = 0;
-
-    void push_keys(node* r, int* cnt, size_t& pos) const {
-        if(r == nullptr) return;
-        push_keys(r->left, cnt, pos);
-        cnt[pos++] = r->key;
-        push_keys(r->right, cnt, pos);
-    }
 public:
     using iterator = RB_Tree::iterator;
     using reverse_iterator = RB_Tree::reverse_iterator;
@@ -551,45 +544,43 @@ public:
         return *this;
     }
 
-    bool operator==(const set& other) {
+    bool operator==(const set& other) const {
         return is_equal(*this, other);
     }
 
-    bool operator!=(const set& other) {
+    bool operator!=(const set& other) const {
         return !(*this == other);
     }
 
     friend std::strong_ordering operator<=>(const set& t, const set& other) {
-        int* this_keys = new int[t.sz];
-        int* other_keys = new int[other.sz];
-        
-        size_t t_sz = 0;
-        size_t o_sz = 0;
-        t.push_keys(t.tree.root, this_keys, t_sz);
-        t.push_keys(other.tree.root, other_keys, o_sz);
-        
-        for(size_t i = 0; i < t_sz && i < o_sz; i++) {
-            if(this_keys[i] < other_keys[i]) 
+        auto t_end(t.end()), other_end(other.end());
+        auto t_it(t.begin()), other_it(other.begin());
+
+        while(t_it != t_end && other_it != other_end) {
+            if(*t_it < *other_it)
                 return std::strong_ordering::less;
-            if(this_keys[i] > other_keys[i]) 
+            if(*t_it > *other_it)
                 return std::strong_ordering::greater;
+            t_it++;
+            other_it++;
         }
-        
-        if(t_sz < o_sz) return std::strong_ordering::less;
-        if(t_sz > o_sz) return std::strong_ordering::greater;
+
+        if(t_it == t.end() && other_it != other.end())
+            return std::strong_ordering::less;
+        if(t_it != t.end() && other_it == other.end())
+            return std::strong_ordering::greater;
         return std::strong_ordering::equal;
     }
     
     friend std::ostream& operator<<(std::ostream& os, const set& obj) {
-        int* buf = new int[obj.sz];
-        size_t p = 0;
-
-        obj.push_keys(obj.tree.root, buf, p); 
         os << "[" << obj.sz << "]" << " { ";
+        auto en = obj.end();
+        auto it = obj.begin();
 
-        for(size_t i = 0; i < obj.sz; i++) {
-            os << buf[i];
-            if(i != obj.sz - 1)
+        while(it != en) {
+            os << *it;
+            it++;
+            if(it != en)
                 os << ", ";
             else 
                 os << " ";
@@ -612,7 +603,7 @@ public:
         return is;
     }
     
-    RB_Tree::iterator find(int key) {return tree.find(key);}
+    RB_Tree::iterator find(int key) const {return tree.find(key);}
 
     void insert(int key) {sz += (int)tree.insert(key);}
 
@@ -623,9 +614,9 @@ public:
         sz = 0;
     }
 
-    bool empty() {return sz == 0;}
+    bool empty() const {return sz == 0;}
 
-    size_t size() {return sz;}
+    size_t size() const {return sz;}
 
     void swap(set& other) {
         std::swap(other.tree.root, this->tree.root);
@@ -636,21 +627,21 @@ public:
         lhs.swap(rhs);
     }
 
-    bool contains(int key) {return find(key) != end();}
+    bool contains(int key) const {return find(key) != end();}
 
-    int count(int key) {return (int)contains(key);}
+    int count(int key) const {return (int)contains(key);}
 
-    bool is_equal(const set& lhs, const set& rhs) {
+    bool is_equal(const set& lhs, const set& rhs) const {
         return tree.is_equal(lhs.tree.root, rhs.tree.root);
     }   
 
-    RB_Tree::iterator begin() {return tree.begin();}
+    RB_Tree::iterator begin() const {return tree.begin();}
 
-    RB_Tree::iterator end() {return tree.end();}
+    RB_Tree::iterator end() const {return tree.end();}
 
-    RB_Tree::reverse_iterator rbegin() {return tree.rbegin();}
+    RB_Tree::reverse_iterator rbegin() const {return tree.rbegin();}
 
-    RB_Tree::reverse_iterator rend() {return tree.rend();}
+    RB_Tree::reverse_iterator rend() const {return tree.rend();}
 };
 
 int main(void) {
