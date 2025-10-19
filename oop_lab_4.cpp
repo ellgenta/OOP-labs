@@ -2,7 +2,6 @@
 #include <compare>
 #include <cassert>
 
-
 class RB_Tree {
 private:
     using color = enum {red, black};
@@ -262,7 +261,7 @@ public:
 
         reverse_iterator(const reverse_iterator&& other) : it(other.it) {}
         
-        reverse_iterator(node* ptr_other, node* prev_other) {it:(ptr_other, prev_other);}
+        reverse_iterator(node* ptr_other, node* prev_other) : it(ptr_other, prev_other) {}
         
         ~reverse_iterator() = default;
         
@@ -345,11 +344,11 @@ public:
 
     node* find(node* r, int key) const {
         if(r == nullptr)
-            return nullptr;
+        return nullptr;
         if(r->key < key)
-            return find(r->right, key);
+        return find(r->right, key);
         else if(r->key > key)
-            return find(r->left, key);
+        return find(r->left, key);
         return r;
     }
 
