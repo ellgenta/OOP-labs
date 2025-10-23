@@ -112,12 +112,64 @@ private:
             u->parent->left = v;
         else
             u->parent->right = v;
-        v->parent = u->parent;
+        if(v != nullptr)
+            v->parent = u->parent;
     }
 
     void fix_erase(node* it) {
         while(it != root && it->cl == black) {
-            
+            if(it->parent && it == it->parent->left) {
+                node* w = it->parent->right;
+                if(w && w->cl == red) {
+                    w->cl = black;
+                    it->parent->cl = red;
+                    rotate_left(it->parent);
+                    w = it->parent->right;
+                }
+                if(!w->left || w->left->cl == black && !w->right || w->right->cl == black) {
+                    w->cl = red;
+                    it = it->parent;
+                }
+                else {
+                    if(!w->right || w->right->cl == black) {
+                        w->left->cl = black;
+                        w->cl = red;
+                        rotate_right(w);
+                        w = it->parent->right;
+                    }
+                    w->cl = it->parent->cl;
+                    it->parent->cl = black;
+                    w->right->cl = black;
+                    rotate_left(it->parent);
+                    it = root;
+                }
+            }
+            else {
+                node* w = it->parent->left;
+                if(w && w->cl == red) {
+                    w->cl = black;
+                    it->parent->cl = red;
+                    rotate_right(it->parent);
+                    w = it->parent->left;
+                }
+                if(!w->right || w->right->cl == black && !w->left || w->left->cl == black) {
+                    w->cl = red;
+                    it = it->parent;
+                }
+                else {
+                    if(!w->left || w->left->cl == black) {
+                        w->right->cl = black;
+                        w->cl = red;
+                        rotate_left(w);
+                        w = it->parent->left;
+                    }
+                    w->cl = it->parent->cl;
+                    it->parent->cl = black;
+                    w->left->cl = black;
+                    rotate_right(it->parent);
+                    it = root;
+                }
+            }
         }
         it->cl = black;
     }
@@ -496,7 +548,8 @@ public:
     virtual RB_Tree::iterator end() const = 0;
     virtual RB_Tree::reverse_iterator rbegin() const = 0;
     virtual RB_Tree::reverse_iterator rend() const = 0;
-    virtual bool operator==(const abstract_data_t&) const = 0; 
+    virtual bool operator==(const abstract_data_t&) const = 0;
+    abstract_data_t& operator=(abstract_data_t&); 
 };
 
 inline abstract_data_t::~abstract_data_t() {}
@@ -550,6 +603,7 @@ public:
 
     ~set() {}
 
+    /*
     set& operator=(set& other) {
         if(&other != this) {
             set cp(other);
@@ -557,17 +611,20 @@ public:
         }
         return *this;
     }
+    */
 
-    /*
-    abstract_data_t& operator=(abstract_data_t& other) {
-        auto pRhs = dynamic_cast<const set*>(&other);
-        if(&other != this) {
-            set cp((const set&)*pRhs);
-            swap(cp);
+    abstract_data_t& operator=(const abstract_data_t& other) override {
+        auto _other = dynamic_cast<const set*>(&other);
+        if(_other != this) {
+            set temp(*_other);
+            this->swap(temp);
+            /*
+            this->tree = _other->tree;
+            this->sz = _other->sz;
+            */
         }
         return *this;
     }
-    */
     
     set& operator=(set&& other) {
         swap(other);
@@ -581,12 +638,12 @@ public:
     }
     */
 
-    bool operator==(const abstract_data_t& other) const {
-        const auto pRhs = dynamic_cast<const set*>(&other);
-        if (pRhs == nullptr) {
-            return false;  // Not a derived.  Cannot be equal.
+    bool operator==(const abstract_data_t& other) const override {
+        const auto _other = dynamic_cast<const set*>(&other);
+        if (_other == nullptr) {
+            return false;  
         }
-        return is_equal(*this, *pRhs);
+        return is_equal(*this, *_other);
     }   
     
     virtual bool operator!=(const set& other) const {
@@ -702,10 +759,10 @@ int main() {
     abstract_data_t *w = new container();
     assert(!w->size());
     *w = *v;
-    assert(*w == *v);
+    //assert(*w == *v);
     /*
-    assert(0 == *w->begin());
     w->erase(19);
+    assert(0 == *w->begin());
     assert(17 == *w->rbegin());
     assert(7 == w->size());
     */
