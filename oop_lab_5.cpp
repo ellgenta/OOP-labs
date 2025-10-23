@@ -1,6 +1,7 @@
 #include <iostream>
 #include <compare>
 #include <cassert>
+#include <vector>
 
 class RB_Tree {
 private:
@@ -480,7 +481,27 @@ public:
     }
 };
 
-class set {
+class abstract_data_t {
+public:
+    virtual ~abstract_data_t() = 0;
+    virtual void insert(int) = 0;
+    virtual void insert_range(std::vector<int>&&) = 0;
+    virtual void erase(int) = 0;
+    virtual bool contains(int) const = 0;
+    virtual int count(int) const = 0;
+    virtual bool empty() const = 0;
+    virtual size_t size() const = 0;
+    virtual RB_Tree::iterator find(int) const = 0;
+    virtual RB_Tree::iterator begin() const = 0;
+    virtual RB_Tree::iterator end() const = 0;
+    virtual RB_Tree::reverse_iterator rbegin() const = 0;
+    virtual RB_Tree::reverse_iterator rend() const = 0;
+    virtual bool operator==(const abstract_data_t&) const = 0; 
+};
+
+inline abstract_data_t::~abstract_data_t() {}
+
+class set : public abstract_data_t {
 private:
     RB_Tree tree;
     size_t sz = 0;
@@ -537,17 +558,38 @@ public:
         return *this;
     }
 
+    /*
+    abstract_data_t& operator=(abstract_data_t& other) {
+        auto pRhs = dynamic_cast<const set*>(&other);
+        if(&other != this) {
+            set cp((const set&)*pRhs);
+            swap(cp);
+        }
+        return *this;
+    }
+    */
+    
     set& operator=(set&& other) {
         swap(other);
         other.clear();
         return *this;
     }
 
+    /*
     bool operator==(const set& other) const {
         return is_equal(*this, other);
     }
+    */
 
-    bool operator!=(const set& other) const {
+    bool operator==(const abstract_data_t& other) const {
+        const auto pRhs = dynamic_cast<const set*>(&other);
+        if (pRhs == nullptr) {
+            return false;  // Not a derived.  Cannot be equal.
+        }
+        return is_equal(*this, *pRhs);
+    }   
+    
+    virtual bool operator!=(const set& other) const {
         return !(*this == other);
     }
 
@@ -602,20 +644,25 @@ public:
         return is;
     }
     
-    RB_Tree::iterator find(int key) const {return tree.find(key);}
+    RB_Tree::iterator find(int key) const override {return tree.find(key);}
 
-    void insert(int key) {sz += (int)tree.insert(key);}
+    void insert(int key) override {sz += (int)tree.insert(key);}
 
-    void erase(int key) {sz -= (int)tree.erase(key);}
+    void insert_range(std::vector<int>&& rg) override {
+        for(auto elem : rg)
+            sz += (int)tree.insert(elem);
+    }
+
+    void erase(int key) override {sz -= (int)tree.erase(key);}
 
     void clear() {
         tree.clear();
         sz = 0;
     }
 
-    bool empty() const {return sz == 0;}
+    bool empty() const override {return sz == 0;}
 
-    size_t size() const {return sz;}
+    size_t size() const override {return sz;}
 
     void swap(set& other) {
         std::swap(other.tree.root, this->tree.root);
@@ -626,70 +673,42 @@ public:
         lhs.swap(rhs);
     }
 
-    bool contains(int key) const {return find(key) != end();}
+    bool contains(int key) const override {return find(key) != end();}
 
-    int count(int key) const {return (int)contains(key);}
+    int count(int key) const override {return (int)contains(key);}
 
     bool is_equal(const set& lhs, const set& rhs) const {
         return tree.is_equal(lhs.tree.root, rhs.tree.root);
     }   
 
-    RB_Tree::iterator begin() const {return tree.begin();}
+    RB_Tree::iterator begin() const override {return tree.begin();}
 
-    RB_Tree::iterator end() const {return tree.end();}
+    RB_Tree::iterator end() const override {return tree.end();}
 
-    RB_Tree::reverse_iterator rbegin() const {return tree.rbegin();}
+    RB_Tree::reverse_iterator rbegin() const override {return tree.rbegin();}
 
-    RB_Tree::reverse_iterator rend() const {return tree.rend();}
+    RB_Tree::reverse_iterator rend() const override {return tree.rend();}
 };
 
-int main(void) {
-    const int* b = new const int[5] {1, 3, 2, 4, 5};
-    
-    set A;
-    set B(b, 5);
-    set C = B;
+using container = set;
 
-    set::iterator _a = B.find(1);
-    set::iterator _b = B.find(3);
-    set::iterator _c = B.find(2);
-    set::iterator _d = B.find(4);
-    set::iterator _e = B.find(5);
-    set::iterator _f = B.find(0);
-
-    assert(_a == B.begin());
-    assert(*_a == 1);
-    assert(*_b == 3);
-    assert(*_c == 2);
-    assert(*_d == 4);
-    assert(*_e == 5);
-    assert(_f == B.end());
-
-    for(auto n : B)
-        std::cout << n << " ";
-
-    std::cout << "\n";
-
-    for(auto it = B.rbegin(); it != B.rend(); ++it) 
-        std::cout << *it << " ";
-
-    delete[] b;
-
-    std::cout << "\n";
-
-    set __a({19, 47, 74, 91});
-    for (auto it = __a.begin(); it != __a.end(); ++it) std::cout << *it << " ";
-
-    std::cout << "\n";
-
-    set __b(__a.begin(), __a.end());
-    assert(__a == __b);
-    for (auto &&it : __b) std::cout << it << " ";
-
-    std::cout << "\n";
-
-    set c(__a.rbegin(), __a.rend());
-    for (auto &&it : c) std::cout << it << " ";
-
-    return 0;
+int main() {
+    abstract_data_t *v = new container({2, 3, 5, 7});
+    assert(!v->empty());
+    v->insert(11);
+    assert(v->contains(11) == true);
+    v->insert_range({13, 17, 19});
+    assert(8 == v->size());
+    abstract_data_t *w = new container();
+    assert(!w->size());
+    *w = *v;
+    assert(*w == *v);
+    /*
+    assert(0 == *w->begin());
+    w->erase(19);
+    assert(17 == *w->rbegin());
+    assert(7 == w->size());
+    */
+    delete v;
+    delete w;
 }
