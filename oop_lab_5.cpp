@@ -629,11 +629,6 @@ public:
     }
 
     bool operator==(const abstract_data_t& other) const override {
-        //const auto _other = dynamic_cast<const set*>(&other);
-        //if (_other == nullptr) {
-        //    return false;  
-        //}
-
         auto o_it = other.begin();
         auto it = this->begin();
         for(; it != this->end() && o_it != other.end(); it++, o_it++) {
@@ -641,7 +636,6 @@ public:
                 return false;
         }
         return it == this->end() && o_it == other.end();
-        //return is_equal(*this, *_other);
     }   
     
     virtual bool operator!=(const set& other) const {
@@ -764,25 +758,5 @@ int main() {
     assert(7 == w->size());
     delete v;
     delete w;
-
-    //from lw # 4
-
-    container a({19, 47, 74, 91});
-    for (auto it = a.begin(); it != a.end(); ++it) std::cout << *it << " ";
-
-    container b(a.begin(), a.end());
-    assert(a == b);
-    for (auto &&it : b) std::cout << it << " ";
-
-    container c;
-
-    //is it a valid thing??
-    //std::copy(b.begin(), b.end(), c.begin());
-
-    assert(std::equal(c.begin(), c.end(), b.begin()));
-    for (auto it = c.rbegin(); it != c.rend(); ++it) std::cout << *it << " ";
-
-    container d(c.rbegin(), c.rend());
-    for (auto &&it : d) std::cout << it << " ";
     return 0;
 }
