@@ -201,9 +201,16 @@ public:
         node* curr = nullptr;
         node* prev = nullptr;
     public:
-        using iterator_category = std::forward_iterator_tag;
-        using value_type = int;
-        
+    /*
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = int;
+    */
+    using difference_type = ptrdiff_t;
+    using value_type = int;
+    using pointer = const int*;
+    using reference = const int&;
+    using iterator_category = std::bidirectional_iterator_tag;
+    
         iterator() {}
         
         iterator(const iterator& other) {
@@ -280,8 +287,8 @@ public:
             return curr->key;
         }
 
-        const node* operator->() {
-            return curr;
+        const int* operator->() {
+            return &curr->key;
         }
 
         iterator& operator=(iterator &other) {
@@ -303,8 +310,11 @@ public:
     private:
         iterator it;
     public:
-        using iterator_category = std::bidirectional_iterator_tag;
+        using difference_type = ptrdiff_t;
         using value_type = int;
+        using pointer = const int*;
+        using reference = const int&;
+        using iterator_category = std::bidirectional_iterator_tag;
         
         reverse_iterator() {}
 
@@ -348,8 +358,8 @@ public:
         }
 
         /*
-        const node* operator->() {
-            return it->;
+        const int* operator->() {
+            return it*;
         }
         */
 
@@ -533,7 +543,7 @@ public:
     }
 };
 
-class abstract_data_t {
+class abstract_data_t { 
 public:
     virtual ~abstract_data_t() = 0;
     virtual void insert(int) = 0;
@@ -549,7 +559,7 @@ public:
     virtual RB_Tree::reverse_iterator rbegin() const = 0;
     virtual RB_Tree::reverse_iterator rend() const = 0;
     virtual bool operator==(const abstract_data_t&) const = 0;
-    abstract_data_t& operator=(abstract_data_t&); 
+    virtual abstract_data_t& operator=(abstract_data_t&) = 0; 
 };
 
 inline abstract_data_t::~abstract_data_t() {}
@@ -603,25 +613,11 @@ public:
 
     ~set() {}
 
-    /*
-    set& operator=(set& other) {
-        if(&other != this) {
-            set cp(other);
-            swap(cp);
-        }
-        return *this;
-    }
-    */
-
-    abstract_data_t& operator=(const abstract_data_t& other) override {
-        auto _other = dynamic_cast<const set*>(&other);
-        if(_other != this) {
-            set temp(*_other);
-            this->swap(temp);
-            /*
-            this->tree = _other->tree;
-            this->sz = _other->sz;
-            */
+    set& operator=(abstract_data_t& other) override {
+        if(this != &other) {
+            this->clear();
+            for(auto el : other)
+                insert(el);
         }
         return *this;
     }
@@ -632,18 +628,20 @@ public:
         return *this;
     }
 
-    /*
-    bool operator==(const set& other) const {
-        return is_equal(*this, other);
-    }
-    */
-
     bool operator==(const abstract_data_t& other) const override {
-        const auto _other = dynamic_cast<const set*>(&other);
-        if (_other == nullptr) {
-            return false;  
+        //const auto _other = dynamic_cast<const set*>(&other);
+        //if (_other == nullptr) {
+        //    return false;  
+        //}
+
+        auto o_it = other.begin();
+        auto it = this->begin();
+        for(; it != this->end() && o_it != other.end(); it++, o_it++) {
+            if(*it != *o_it) 
+                return false;
         }
-        return is_equal(*this, *_other);
+        return it == this->end() && o_it == other.end();
+        //return is_equal(*this, *_other);
     }   
     
     virtual bool operator!=(const set& other) const {
@@ -759,13 +757,32 @@ int main() {
     abstract_data_t *w = new container();
     assert(!w->size());
     *w = *v;
-    //assert(*w == *v);
-    /*
+    assert(*w == *v);
     w->erase(19);
-    assert(0 == *w->begin());
+    assert(2 == *w->begin());
     assert(17 == *w->rbegin());
     assert(7 == w->size());
-    */
     delete v;
     delete w;
+
+    //from lw # 4
+
+    container a({19, 47, 74, 91});
+    for (auto it = a.begin(); it != a.end(); ++it) std::cout << *it << " ";
+
+    container b(a.begin(), a.end());
+    assert(a == b);
+    for (auto &&it : b) std::cout << it << " ";
+
+    container c;
+
+    //is it a valid thing??
+    //std::copy(b.begin(), b.end(), c.begin());
+
+    assert(std::equal(c.begin(), c.end(), b.begin()));
+    for (auto it = c.rbegin(); it != c.rend(); ++it) std::cout << *it << " ";
+
+    container d(c.rbegin(), c.rend());
+    for (auto &&it : d) std::cout << it << " ";
+    return 0;
 }
