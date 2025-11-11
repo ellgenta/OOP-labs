@@ -3,12 +3,13 @@
 #include <cassert>
 #include <vector>
 
+template<typename T, class comparator = std::less<T>>
 class RB_Tree {
 private:
     using color = enum {red, black};
     
     struct node {
-        int key = 0;
+        T key;
         color cl = black;
         node* left = nullptr;
         node* right = nullptr;
@@ -16,9 +17,9 @@ private:
     
         node() {}
     
-        node(int v) {key = v;}
+        node(T v) {key = v;}
     
-        node(int v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
+        node(T v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
     };
 
     node* max = nullptr;
@@ -543,6 +544,7 @@ public:
     }
 };
 
+template<typename T, class comparator = std::less<T>>
 class abstract_data_t { 
 public:
     virtual ~abstract_data_t() = 0;
@@ -553,24 +555,25 @@ public:
     virtual int count(int) const = 0;
     virtual bool empty() const = 0;
     virtual size_t size() const = 0;
-    virtual RB_Tree::iterator find(int) const = 0;
-    virtual RB_Tree::iterator begin() const = 0;
-    virtual RB_Tree::iterator end() const = 0;
-    virtual RB_Tree::reverse_iterator rbegin() const = 0;
-    virtual RB_Tree::reverse_iterator rend() const = 0;
+    virtual RB_Tree<T>::iterator find(int) const = 0;
+    virtual RB_Tree<T>::iterator begin() const = 0;
+    virtual RB_Tree<T>::iterator end() const = 0;
+    virtual RB_Tree<T>::reverse_iterator rbegin() const = 0;
+    virtual RB_Tree<T>::reverse_iterator rend() const = 0;
     virtual bool operator==(const abstract_data_t&) const = 0;
     virtual abstract_data_t& operator=(abstract_data_t&) = 0; 
 };
 
-inline abstract_data_t::~abstract_data_t() {}
+inline abstract_data_t<>::~abstract_data_t() {}
 
-class set : public abstract_data_t {
+template<typename T, class comparator = std::less<T>>
+class set : public abstract_data_t<T> {
 private:
-    RB_Tree tree;
+    RB_Tree<T, comparator> tree;
     size_t sz = 0;
 public:
-    using iterator = RB_Tree::iterator;
-    using reverse_iterator = RB_Tree::reverse_iterator;
+    using iterator = RB_Tree<T, comparator>::iterator;
+    using reverse_iterator = RB_Tree<T, comparator>::reverse_iterator;
 
     set() {}
 
@@ -580,8 +583,8 @@ public:
     }
    
     set(set& other) {
-        RB_Tree T(other.tree);
-        tree = T;
+        RB_Tree<T, comparator> _T(other.tree);
+        tree = _T;
         sz = other.sz;
     }
 
@@ -613,7 +616,7 @@ public:
 
     ~set() {}
 
-    set& operator=(abstract_data_t& other) override {
+    set& operator=(abstract_data_t<T, comparator>& other) override {
         if(this != &other) {
             this->clear();
             for(auto el : other)
@@ -628,7 +631,7 @@ public:
         return *this;
     }
 
-    bool operator==(const abstract_data_t& other) const override {
+    bool operator==(const abstract_data_t<T, comparator>& other) const override {
         auto o_it = other.begin();
         auto it = this->begin();
         for(; it != this->end() && o_it != other.end(); it++, o_it++) {
@@ -693,7 +696,7 @@ public:
         return is;
     }
     
-    RB_Tree::iterator find(int key) const override {return tree.find(key);}
+    RB_Tree<T, comparator>::iterator find(int key) const override {return tree.find(key);}
 
     void insert(int key) override {sz += (int)tree.insert(key);}
 
@@ -730,22 +733,22 @@ public:
         return tree.is_equal(lhs.tree.root, rhs.tree.root);
     }   
 
-    RB_Tree::iterator begin() const override {return tree.begin();}
+    RB_Tree<T, comparator>::iterator begin() const override {return tree.begin();}
 
-    RB_Tree::iterator end() const override {return tree.end();}
+    RB_Tree<T, comparator>::iterator end() const override {return tree.end();}
 
-    RB_Tree::reverse_iterator rbegin() const override {return tree.rbegin();}
+    RB_Tree<T, comparator>::reverse_iterator rbegin() const override {return tree.rbegin();}
 
-    RB_Tree::reverse_iterator rend() const override {return tree.rend();}
+    RB_Tree<T, comparator>::reverse_iterator rend() const override {return tree.rend();}
 };
 
-using container = set;
+//using container = set;
 
 int main() {
+    //Assertions part I:
+    
+    set<int> a({2, 3, 5, 7});
     /*
-
-    Assertions part I:
-    container<int> a({2, 3, 5, 7});
     a.push(11);
     assert(11 == a[a.size() - 1]);
     a.insert(a.begin(), 1);
