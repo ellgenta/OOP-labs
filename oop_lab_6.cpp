@@ -3,7 +3,7 @@
 #include <cassert>
 #include <vector>
 
-template<typename T, class comparator = std::less<T>>
+template<typename T, class Compare = std::less<T>, class Allocator = std::allocator<T>>
 class RB_Tree {
 private:
     using color = enum {red, black};
@@ -544,36 +544,14 @@ public:
     }
 };
 
-template<typename T, class comparator = std::less<T>>
-class abstract_data_t { 
-public:
-    virtual ~abstract_data_t() = 0;
-    virtual void insert(int) = 0;
-    virtual void insert_range(std::vector<int>&&) = 0;
-    virtual void erase(int) = 0;
-    virtual bool contains(int) const = 0;
-    virtual int count(int) const = 0;
-    virtual bool empty() const = 0;
-    virtual size_t size() const = 0;
-    virtual RB_Tree<T>::iterator find(int) const = 0;
-    virtual RB_Tree<T>::iterator begin() const = 0;
-    virtual RB_Tree<T>::iterator end() const = 0;
-    virtual RB_Tree<T>::reverse_iterator rbegin() const = 0;
-    virtual RB_Tree<T>::reverse_iterator rend() const = 0;
-    virtual bool operator==(const abstract_data_t&) const = 0;
-    virtual abstract_data_t& operator=(abstract_data_t&) = 0; 
-};
-
-inline abstract_data_t<>::~abstract_data_t() {}
-
-template<typename T, class comparator = std::less<T>>
-class set : public abstract_data_t<T> {
+template<typename T, class Compare = std::less<T>, class Allocator = std::allocator<T>>
+class set {
 private:
-    RB_Tree<T, comparator> tree;
+    RB_Tree<T, Compare, Allocator> tree;
     size_t sz = 0;
 public:
-    using iterator = RB_Tree<T, comparator>::iterator;
-    using reverse_iterator = RB_Tree<T, comparator>::reverse_iterator;
+    using iterator = RB_Tree<T, Compare, Allocator>::iterator;
+    using reverse_iterator = RB_Tree<T, Compare, Allocator>::reverse_iterator;
 
     set() {}
 
@@ -583,7 +561,7 @@ public:
     }
    
     set(set& other) {
-        RB_Tree<T, comparator> _T(other.tree);
+        RB_Tree<T, Compare, Allocator> _T(other.tree);
         tree = _T;
         sz = other.sz;
     }
@@ -616,7 +594,7 @@ public:
 
     ~set() {}
 
-    set& operator=(abstract_data_t<T, comparator>& other) override {
+    set& operator=(set& other) {
         if(this != &other) {
             this->clear();
             for(auto el : other)
@@ -631,7 +609,7 @@ public:
         return *this;
     }
 
-    bool operator==(const abstract_data_t<T, comparator>& other) const override {
+    bool operator==(const set& other) const {
         auto o_it = other.begin();
         auto it = this->begin();
         for(; it != this->end() && o_it != other.end(); it++, o_it++) {
@@ -696,25 +674,25 @@ public:
         return is;
     }
     
-    RB_Tree<T, comparator>::iterator find(int key) const override {return tree.find(key);}
+    iterator find(T key) const {return tree.find(key);}
 
-    void insert(int key) override {sz += (int)tree.insert(key);}
+    void insert(T key) {sz += (int)tree.insert(key);}
 
-    void insert_range(std::vector<int>&& rg) override {
+    void insert_range(std::vector<T>&& rg) {
         for(auto elem : rg)
             sz += (int)tree.insert(elem);
     }
 
-    void erase(int key) override {sz -= (int)tree.erase(key);}
+    void erase(T key) {sz -= (int)tree.erase(key);}
 
     void clear() {
         tree.clear();
         sz = 0;
     }
 
-    bool empty() const override {return sz == 0;}
+    bool empty() const {return sz == 0;}
 
-    size_t size() const override {return sz;}
+    size_t size() const {return sz;}
 
     void swap(set& other) {
         std::swap(other.tree.root, this->tree.root);
@@ -725,21 +703,21 @@ public:
         lhs.swap(rhs);
     }
 
-    bool contains(int key) const override {return find(key) != end();}
+    bool contains(T key) const {return find(key) != end();}
 
-    int count(int key) const override {return (int)contains(key);}
+    int count(T key) const {return (int)contains(key);}
 
     bool is_equal(const set& lhs, const set& rhs) const {
         return tree.is_equal(lhs.tree.root, rhs.tree.root);
     }   
 
-    RB_Tree<T, comparator>::iterator begin() const override {return tree.begin();}
+    iterator begin() const {return tree.begin();}
 
-    RB_Tree<T, comparator>::iterator end() const override {return tree.end();}
+    iterator end() const {return tree.end();}
 
-    RB_Tree<T, comparator>::reverse_iterator rbegin() const override {return tree.rbegin();}
+    reverse_iterator rbegin() const {return tree.rbegin();}
 
-    RB_Tree<T, comparator>::reverse_iterator rend() const override {return tree.rend();}
+    reverse_iterator rend() const {return tree.rend();}
 };
 
 //using container = set;
