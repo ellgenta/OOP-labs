@@ -720,18 +720,20 @@ public:
     reverse_iterator rend() const {return tree.rend();}
 };
 
+#define container   set
+
 //using container = set;
 
 int main() {
     //Assertions part I:
     
     set<int> a({2, 3, 5, 7});
-    /*
-    a.push(11);
-    assert(11 == a[a.size() - 1]);
-    a.insert(a.begin(), 1);
-    assert(1 == a[0]);
-    a.extend(container<int>({13, 17, 19}));
+    
+    a.insert(11);
+    assert(a.find(11) == a.end());
+    //a.insert(a.begin(), 1);
+    //assert(1 == a.begin());
+    //a.extend(container<int>({13, 17, 19}));
     a.erase(a.rbegin());
     assert(a.find(19) == a.end());
     assert(8 == a.size());
@@ -751,7 +753,7 @@ int main() {
     c.insert(c.find("world"), " ");
     c[c.size() - 1].append("!");
 
-    Assertion part II:
+    //Assertion part II:
     set<int> s1;
 
     s1.insert(3);
@@ -769,6 +771,6 @@ int main() {
             ++it;
     }
     assert(0 == s2.erase(1));
-    */
+    
     return 0;
 }
