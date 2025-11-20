@@ -202,14 +202,10 @@ public:
         node* curr = nullptr;
         node* prev = nullptr;
     public:
-    /*
-    using iterator_category = std::bidirectional_iterator_tag;
-    using value_type = int;
-    */
     using difference_type = ptrdiff_t;
-    using value_type = int;
-    using pointer = const int*;
-    using reference = const int&;
+    using value_type = T;
+    using pointer = const T*;
+    using reference = const T&;
     using iterator_category = std::bidirectional_iterator_tag;
     
         iterator() {}
@@ -283,12 +279,12 @@ public:
             return temp;
         }
 
-        const int& operator*() {
+        const T& operator*() {
             assert(curr != nullptr);
             return curr->key;
         }
 
-        const int* operator->() {
+        const T* operator->() {
             return &curr->key;
         }
 
@@ -312,9 +308,9 @@ public:
         iterator it;
     public:
         using difference_type = ptrdiff_t;
-        using value_type = int;
-        using pointer = const int*;
-        using reference = const int&;
+        using value_type = T;
+        using pointer = const T*;
+        using reference = const T&;
         using iterator_category = std::bidirectional_iterator_tag;
         
         reverse_iterator() {}
@@ -354,7 +350,7 @@ public:
             return *this;
         }
 
-        const int& operator*() {
+        const T& operator*() {
             return *it;
         }
 
@@ -398,7 +394,7 @@ public:
         root = nullptr;
     }
 
-    iterator find(int key) const {
+    iterator find(const T& key) const {
         iterator it = begin();
         iterator en = end();
         while(it != en && *it != key)
@@ -406,7 +402,7 @@ public:
         return it;
     }
 
-    node* find(node* r, int key) const {
+    node* find(node* r, const T& key) const {
         if(r == nullptr)
         return nullptr;
         if(r->key < key)
@@ -416,7 +412,7 @@ public:
         return r;
     }
 
-    bool insert(int key) {
+    bool insert(const T& key) {
         if(root == nullptr){
             root = new node(key);
             return true;   
@@ -451,8 +447,11 @@ public:
         return true;
     }
 
-    bool erase(int key) {
-        node* it = find(root, key);
+    bool erase(const T& key, iterator& pos) {
+        pos = find(key);
+        node* it = pos.curr;
+        //node* it = find(root, key);
+
         if(it == nullptr)
             return false;
 
@@ -573,7 +572,7 @@ public:
         other.sz = 0;
     }
 
-    set(std::initializer_list<int> l) {
+    set(std::initializer_list<T> l) {
         for(auto n : l)
             insert(n);
     }
@@ -674,20 +673,44 @@ public:
         return is;
     }
     
-    iterator find(T key) const {return tree.find(key);}
+    iterator find(const T& key) const {return tree.find(key);}
 
     void insert(T key) {sz += (int)tree.insert(key);}
 
-    void insert_range(std::vector<T>&& rg) {
-        for(auto elem : rg)
-            sz += (int)tree.insert(elem);
+    void insert(iterator pos, const T& key) {insert(key);}
+
+    void insert(reverse_iterator pos, const T& key) {insert(key);}
+
+    /*
+    void erase(T key) {
+        //iterator it = this->end();
+        sz -= (int)tree.erase(key);
+    }
+    */
+    
+    size_t erase(const T& key) {
+        iterator it = this->end();
+        sz -= (int)tree.erase(key, it);
+        return sz;
     }
 
-    void erase(T key) {sz -= (int)tree.erase(key);}
+    void erase(iterator pos) {
+        iterator& it = this->end();
+        sz -= (int)tree.erase(*pos);
+        erase(*pos);
+    }
+
+    void erase(reverse_iterator pos) {erase(*pos);}
 
     void clear() {
         tree.clear();
         sz = 0;
+    }
+
+    void merge(set<T, Compare, Allocator> other) {
+        for(auto& elm : other) 
+            this->insert(elm);
+        other.clear();
     }
 
     bool empty() const {return sz == 0;}
@@ -727,50 +750,55 @@ public:
 int main() {
     //Assertions part I:
     
-    set<int> a({2, 3, 5, 7});
+    container<int> a({2, 3, 5, 7});
     
     a.insert(11);
-    assert(a.find(11) == a.end());
-    //a.insert(a.begin(), 1);
-    //assert(1 == a.begin());
-    //a.extend(container<int>({13, 17, 19}));
+    assert(a.find(11) == a.rbegin());
+    a.insert(a.begin(), 1);
+    assert(1 == *a.begin());
+    //a.extend(container<int>({13, 17, 19})); 
+    a.merge(container<int>({13, 17, 19}));
     a.erase(a.rbegin());
     assert(a.find(19) == a.end());
     assert(8 == a.size());
-    container<char> b = "abra";
-    assert(0 == b.back());
+    container<char> b = {'a','b','r','a','\0'}; //initially "abra"
+    assert(0 == *b.rbegin());
     b.erase(b.rbegin());
-    b.push('c');
+    b.insert('c');
     assert('c' == *b.rbegin());
     b.insert(b.end(), 'a');
-    assert('a' == *b.rbegin());
-    b.extend(container<char>("dabra"));
+    assert('a' == *b.rend());
+    b.merge(container<char>({'d','a','b','r','a'})); //"dabra"
     assert(b.rbegin() == b.find(0));
-    b[0] = 'A';
-    assert('A' == b.front());
+    //b[0] = 'A';
+    //assert('A' == b.front());
     container<std::string> c({"Hello", "world"});
-    c[0].append(",");
+    //c[0].append(",");
     c.insert(c.find("world"), " ");
-    c[c.size() - 1].append("!");
-
+    //c[c.size() - 1].append("!");
+    
+    
     //Assertion part II:
     set<int> s1;
-
+    
     s1.insert(3);
     s1.insert(3);
     assert(1 == s1.count(3));
-
+    
     set<int> s2 = {1, 2, 3, 4, 1, 2, 3, 4};
     assert(4 == s2.size());
-
+    
     for (auto it = s2.begin(); it != s2.end();)
     {
         if (*it % 2)
-            it = s2.erase(it);
-        else
-            ++it;
+        //it = s2.erase(it);
+        //else
+        ++it;
+         
     }
     assert(0 == s2.erase(1));
+    /* control line
+    */
     
     return 0;
 }
