@@ -116,8 +116,8 @@ private:
     }
 
     void fix_erase(node* it) {
-        //if(it == nullptr)
-        //    return;
+        if(it == nullptr)
+            return;
         while(it != root && it->cl == black) {
             if(it->parent && it == it->parent->left) {
                 node* w = it->parent->right;
@@ -202,11 +202,11 @@ public:
         node* curr = nullptr;
         node* prev = nullptr;
     public:
-    using difference_type = ptrdiff_t;
-    using value_type = T;
-    using pointer = const T*;
-    using reference = const T&;
-    using iterator_category = std::bidirectional_iterator_tag;
+        using difference_type = ptrdiff_t;
+        using value_type = T;
+        using pointer = const T*;
+        using reference = const T&;
+        using iterator_category = std::bidirectional_iterator_tag;
     
         iterator() {}
         
@@ -228,12 +228,13 @@ public:
         ~iterator() = default;
         
         iterator& operator++() {
+            Compare _cmp;
             if(curr == nullptr)
                 return *this;
 
             if(curr->right == nullptr) {
                 prev = curr;
-                while(curr && curr->key <= prev->key)
+                while(curr && (curr->key == prev->key || _cmp(curr->key, prev->key)))
                     curr = curr->parent;
             } 
             else {
@@ -253,6 +254,7 @@ public:
         }
 
         iterator &operator--() {
+            Compare _cmp;
             if(curr == nullptr) {
                 curr = prev;
                 return *this;
@@ -260,7 +262,7 @@ public:
 
             if(curr->left == nullptr) {
                 prev = curr;
-                while(curr && curr->key >= prev->key)
+                while(curr && _cmp(curr->key, prev->key) == false)
                     curr = curr->parent;
             } 
             else {
@@ -453,13 +455,14 @@ public:
     }
 
     node* find(node* r, const T& key) const {
+        Compare _cmp;
         if(r == nullptr)
-        return nullptr;
-        if(r->key < key)
-        return find(r->right, key);
-        else if(r->key > key)
+            return nullptr;
+        if(_cmp(r->key, key) == true)
+            return find(r->right, key);
+        else if(r->key == key)
+            return r;
         return find(r->left, key);
-        return r;
     }
 
     bool insert(const T& key) {
@@ -469,20 +472,21 @@ public:
         }
 
         node* it = root;
+        Compare _cmp;
         while(it->key != key) {
-            if(it->key > key) {
-                if(it->left == nullptr) {
-                    it->left = new node(key, red, it);
-                    break;
-                }
-                it = it->left;
-            }
-            else if(it->key < key) {
+            if(_cmp(it->key, key)) {
                 if(it->right == nullptr) {
                     it->right = new node(key, red, it);
                     break;
                 }
                 it = it->right;
+            }
+            else if(it->key != key) {
+                if(it->left == nullptr) {
+                    it->left = new node(key, red, it);
+                    break;
+                }
+                it = it->left;
             }
         }
 
@@ -713,10 +717,11 @@ public:
         auto t_end(t.end()), other_end(other.end());
         auto t_it(t.begin()), other_it(other.begin());
 
+        Compare _cmp;
         while(t_it != t_end && other_it != other_end) {
-            if(*t_it < *other_it)
+            if(_cmp(*t_it, *other_it))
                 return std::strong_ordering::less;
-            if(*t_it > *other_it)
+            if(*t_it != *other_it)
                 return std::strong_ordering::greater;
             t_it++;
             other_it++;
@@ -794,11 +799,17 @@ public:
     }
 
     void merge(set<T, Compare, Allocator> other) {
+        size_t temp_size = 0;
+        T temp[other.size()];
         for(auto& elm : other) {
-            if(this->contains(elm) == false) 
+            if(this->contains(elm) == false) {
                 this->insert(elm);
+                temp[temp_size++] = elm;
+            }
         }
-        other.clear();
+        for(int i = temp_size - 1; i >= 0; i--) {
+            other.erase(temp[i]);
+        }
     }
 
     bool empty() const {return sz == 0;}
@@ -865,7 +876,6 @@ int main() {
     c.insert(c.find("world"), " ");
     //c[c.size() - 1].append("!");
     
-    
     //Assertion part II:
     set<int> s1;
     
@@ -886,6 +896,9 @@ int main() {
     assert(0 == s2.erase(1)); 
     /* control line
     */
-    
+    set<int, std::greater<int>> _r({1,2,3});
+    assert(*_r.begin() == 3);
+    assert(*_r.rbegin() == 1);
+
     return 0;
 }
