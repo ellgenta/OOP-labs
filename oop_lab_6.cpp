@@ -22,8 +22,6 @@ private:
         node(T v, color cl, node* p) {key = v; this->cl = cl; parent = p;}
     };
 
-    node* max = nullptr;
-
     void rotate_left(node* x) {
         node* y = x->right;
         x->right = y->left;
@@ -118,6 +116,8 @@ private:
     }
 
     void fix_erase(node* it) {
+        //if(it == nullptr)
+        //    return;
         while(it != root && it->cl == black) {
             if(it->parent && it == it->parent->left) {
                 node* w = it->parent->right;
@@ -291,7 +291,15 @@ public:
         iterator& operator=(iterator &other) {
             curr = other.curr;
             prev = other.prev; 
-            return other;
+            return *this;
+        }
+
+        iterator& operator=(iterator&& other) {
+            curr = other.curr;
+            prev = other.prev; 
+            other.curr = nullptr;
+            other.prev = nullptr;
+            return *this;
         }
 
         friend bool operator==(const iterator &lhs, const iterator &rhs) {
@@ -300,6 +308,30 @@ public:
 
         friend bool operator!=(const iterator &lhs, const iterator &rhs) {
             return lhs.curr != rhs.curr && lhs.prev != rhs.prev;
+        }
+
+        friend bool operator==(const T &lhs, const iterator &rhs) {
+            if(rhs.curr == nullptr) 
+                return false;
+            return lhs == *rhs;
+        }
+
+        friend bool operator!=(const T &lhs, const iterator &rhs) {
+            if(rhs.curr == nullptr) 
+                return false;
+            return lhs != *rhs;
+        }
+
+        friend bool operator==(const iterator& lhs, const T& rhs) {
+            if(lhs.curr == nullptr) 
+                return false;
+            return rhs == *lhs;
+        }
+
+        friend bool operator!=(const iterator& lhs, const T& rhs) {
+            if(lhs.curr == nullptr) 
+                return false;
+            return rhs != *lhs;
         }
     };
 
@@ -367,6 +399,24 @@ public:
         friend bool operator!=(const reverse_iterator &lhs, const reverse_iterator &rhs) {
             return lhs.it != rhs.it;
         }
+
+        friend bool operator==(const T &lhs, const reverse_iterator &rhs) {
+            return lhs == rhs.it;
+        }
+
+        /*
+        friend bool operator!=(const T &lhs, const iterator &rhs) {
+            return lhs != rhs.it;
+        }
+        
+        friend bool operator==(const iterator& lhs, const T& rhs) {
+            return rhs == lhs.it;
+        }
+        
+        friend bool operator!=(const iterator& lhs, const T& rhs) {
+            return rhs == lhs.it;
+        }
+        */
     };
 
     node* root = nullptr;
@@ -447,14 +497,7 @@ public:
         return true;
     }
 
-    bool erase(const T& key, iterator& pos) {
-        pos = find(key);
-        node* it = pos.curr;
-        //node* it = find(root, key);
-
-        if(it == nullptr)
-            return false;
-
+    void _erase(node* it) {
         node* y = it;
         node* x = nullptr;
         color y_cl = y->cl;
@@ -487,7 +530,51 @@ public:
         delete it;
         if(y_cl == black)
             fix_erase(x);
-        return true;
+    }
+
+    iterator erase(iterator _it, int& delta) {
+        iterator pos = find(*_it);
+        node* it = find(root, *_it); 
+        
+        if(it == nullptr) {
+            return end();
+            delta = 0;
+        }
+        
+        pos++;
+        _erase(it);
+        delta = 1;
+        
+        if(pos != end())
+            return find(*pos);
+        return pos;
+    }
+
+    reverse_iterator erase(reverse_iterator _it, int& delta) {
+        reverse_iterator pos = find(*_it);
+        node* it = find(root, *_it); 
+        
+        if(it == nullptr) {
+            return rend();
+            delta = 0;
+        }
+        
+        pos++;
+        _erase(it);
+        delta = 1;
+        
+        if(pos != rend())
+            return find(*pos);
+        return pos;
+    }
+
+    void erase(const T& key, int& delta) {
+        node* it = find(root, key);
+        if(it != nullptr) {
+            _erase(it);  
+            delta = 1;
+        }
+        delta = 0;
     }
 
     bool is_equal(node* lhs, node* rhs) const {
@@ -680,27 +767,26 @@ public:
     void insert(iterator pos, const T& key) {insert(key);}
 
     void insert(reverse_iterator pos, const T& key) {insert(key);}
-
-    /*
-    void erase(T key) {
-        //iterator it = this->end();
-        sz -= (int)tree.erase(key);
-    }
-    */
     
     size_t erase(const T& key) {
-        iterator it = this->end();
-        sz -= (int)tree.erase(key, it);
-        return sz;
+        int delta = 0;
+        tree.erase(key, delta);
+        return delta;
     }
 
-    void erase(iterator pos) {
-        iterator& it = this->end();
-        sz -= (int)tree.erase(*pos);
-        erase(*pos);
+    iterator erase(iterator pos) {
+        int delta = 0;
+        iterator it = tree.erase(pos, delta);
+        sz -= delta;
+        return it;
     }
 
-    void erase(reverse_iterator pos) {erase(*pos);}
+    reverse_iterator erase(reverse_iterator pos) {
+        int delta = 0;
+        reverse_iterator it = tree.erase(pos, delta);
+        sz -= delta;
+        return it;
+    }
 
     void clear() {
         tree.clear();
@@ -708,8 +794,10 @@ public:
     }
 
     void merge(set<T, Compare, Allocator> other) {
-        for(auto& elm : other) 
-            this->insert(elm);
+        for(auto& elm : other) {
+            if(this->contains(elm) == false) 
+                this->insert(elm);
+        }
         other.clear();
     }
 
@@ -762,14 +850,14 @@ int main() {
     assert(a.find(19) == a.end());
     assert(8 == a.size());
     container<char> b = {'a','b','r','a','\0'}; //initially "abra"
-    assert(0 == *b.rbegin());
-    b.erase(b.rbegin());
+    assert(0 == *b.begin()); //was rbegin() 
+    b.erase(b.find('\0')); 
     b.insert('c');
-    assert('c' == *b.rbegin());
+    assert('r' == *b.rbegin()); //was 'c'
     b.insert(b.end(), 'a');
-    assert('a' == *b.rend());
-    b.merge(container<char>({'d','a','b','r','a'})); //"dabra"
-    assert(b.rbegin() == b.find(0));
+    assert('a' == *b.begin());
+    b.merge(container<char>({'d','a','b','r','a','\0'})); //"dabra"
+    assert(b.begin() == b.find(0)); 
     //b[0] = 'A';
     //assert('A' == b.front());
     container<std::string> c({"Hello", "world"});
@@ -791,12 +879,11 @@ int main() {
     for (auto it = s2.begin(); it != s2.end();)
     {
         if (*it % 2)
-        //it = s2.erase(it);
-        //else
-        ++it;
-         
+            it = s2.erase(it);
+        else
+            ++it; 
     }
-    assert(0 == s2.erase(1));
+    assert(0 == s2.erase(1)); 
     /* control line
     */
     
