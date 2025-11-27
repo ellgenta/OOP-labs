@@ -8,8 +8,9 @@ This repository contains implementation of laboratory works from university OOP 
 2. LW #2 - implementing [std::set](https://en.cppreference.com/w/cpp/container/set.html) - constructors, destructor and basic methods
 3. LW #3 - implementing [std::set](https://en.cppreference.com/w/cpp/container/set.html) - operators
 4. LW #4 - implementing [std::set](https://en.cppreference.com/w/cpp/container/set.html) - iterators
-5. LW #5 - implementing [dynamic polymorphism](https://github.com/AbsoluteVirtue/fcim_poo_21.6/blob/master/lab5_bcc33f14.cpp) via an abstarct base class
-6. LW #6 - implementing [static polymorphism](httphttps://github.com/AbsoluteVirtue/fcim_poo_21.6/blob/master/lab6b.cpp) for std::set via parameterizing
+5. LW #5 - implementing [dynamic polymorphism](https://github.com/AbsoluteVirtue/fcim_poo_21.6/blob/master/lab5.md) via an abstract base class
+6. LW #6 - implementing [static polymorphism](https://github.com/AbsoluteVirtue/fcim_poo_21.6/blob/master/lab6.md) for std::set via parameterizing
+7. LW #7 - error handling and [contracts](https://github.com/AbsoluteVirtue/fcim_poo_21.6/blob/master/lab7.md) for the custom std::set implementation
 
 ## External links 
 
